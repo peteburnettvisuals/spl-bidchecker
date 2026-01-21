@@ -15,8 +15,6 @@ def local_css(file_name):
 
 local_css("style.css")
 
-ns = {'ans': 'http://example.org/assessment'}
-
 
 # --- 1. TACTICAL SECRET & DB LOADER (MAINTAINED) ---
 try:
@@ -47,37 +45,21 @@ if "archived_status" not in st.session_state:
     st.session_state.archived_status = {}
 
 # --- 4. THE AI AUDITOR ENGINE ---
-def get_auditor_response(user_input, csf_data):
-    """
-    csf_data is a dict containing:
-    'id', 'name', 'type', 'multiplier', 'criteria'
-    """
+def get_auditor_response(prompt, criteria_list, csf_id):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.0-flash')
     
-    # Contextual prompt construction based on XML attributes
-    criteria_str = "\n".join([f"- {c}" for c in csf_data['criteria']])
-    
+    # System Instruction: AI acts as a Bid Auditor
     sys_instr = f"""
-    ROLE: SPL Lead Auditor (Corporate/Procurement Focus).
-    CSF CONTEXT: {csf_data['name']} (ID: {csf_data['id']}).
-    MODE: {csf_data['type']} Evaluation.
-    
-    CRITERIA STANDARDS:
-    {criteria_str}
-    
-    INSTRUCTIONS:
-    1. Conduct a professional handshake. Ask the user if they believe they currently meet the criteria regarding this particular CSF. For instance, if it is a document or policy, does it meet the requirements shown?
-    2. If MODE is 'Binary': Decide if the response indicates a total 'SUCCESS'. If so, append [VALIDATE: ALL].
-    3. If MODE is 'Proportional': Evaluate 'fitness for purpose' (0.0 to 1.0). Append [SCORE: 0.X] based on your best guess of readiness.
-    4. For individual criteria met, append [ITEM_MET: Exact Criteria Text].
-    5. Maintain a professional, forensic tone.
+    You are the SPL Bid Auditor. Your goal is to validate if the user meets these criteria: {criteria_list}.
+    If evidence is sufficient for a specific item, append [VALIDATE: item_text].
+    If the entire CSF is satisfied, append [CSF_ARCHIVE: {csf_id}=SUCCESS].
+    Be professional, cynical like a procurement officer, and demand proof. 
     """
     
-    # Maintain session context for the specific CSF
-    chat = model.start_chat(history=st.session_state.chat_history)
-    response = chat.send_message(f"{sys_instr}\n\nUser Evidence: {user_input}")
+    chat = model.start_chat(history=[])
+    response = chat.send_message(f"{sys_instr}\n\nUser Evidence: {prompt}")
     return response.text
 
 def get_user_credentials():
@@ -113,28 +95,6 @@ if "authenticator" not in st.session_state:
     )
 
 authenticator = st.session_state.authenticator
-
-def calculate_live_score(root, archived_status):
-    total_weighted = 0
-    
-    for category in root.findall('ans:Category', ns):
-        for csf in category.findall('ans:CSF', ns):
-            csf_id = csf.get('id')
-            multiplier = float(csf.find('.//ans:Multiplier', ns).text)
-            
-            # Get all criteria for this factor
-            criteria_items = [i.text for i in csf.findall(".//ans:Item", ns)]
-            if not criteria_items:
-                continue
-                
-            # Count validated items for this CSF
-            user_met_dict = archived_status.get(csf_id, {})
-            met_count = sum(1 for item in criteria_items if user_met_dict.get(item))
-            
-            # Apply weighted logic: (Completed / Total) * Multiplier
-            total_weighted += (met_count / len(criteria_items)) * multiplier
-                
-    return int(total_weighted)
 
 
 # --- 5. UI LAYOUT (3-COLUMN SKETCH) ---
@@ -212,86 +172,38 @@ else:
 
     # Render the Assess UI    
 
-    # --- SIDEBAR: THE SPEEDOMETER & NAV ---
+    # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
         st.header("🦅 TOTAL READINESS")
-        
-        # Ensure live_score can access the global namespace 'ns'
-        live_score = calculate_live_score(root, st.session_state.archived_status)
-        st.metric("WEIGHTED SCORE", f"{live_score} PTS")
+        # Simple score math for the demo
+        total_score = sum([1 for csf in st.session_state.archived_status if any(st.session_state.archived_status[csf].values())])
+        st.metric("WEIGHTED SCORE", f"{total_score * 100}") # Placeholder for multiplier logic
         
         st.divider()
         st.subheader("📁 Categories")
-        
-        # FIX: Use 'ans:' prefix and pass the 'ns' dictionary to find nodes
-        category_nodes = root.findall('ans:Category', ns)
-        
-        for cat in category_nodes:
-            cat_name = cat.get('name')
-            cat_id = cat.get('id')
-            
-            # Defining variables inside a successful loop prevents the NameError
-            if st.button(cat_name, key=f"side_nav_{cat_id}"):
-                st.session_state.active_cat = cat_id
-                # Reset active_csf to the first item of the new category to avoid ghosting
-                first_csf = cat.find('ans:CSF', ns)
-                if first_csf is not None:
-                    st.session_state.active_csf = first_csf.get('id')
-                
-                st.session_state.chat_history = []
-                st.rerun()
+        for cat in root.findall('Category'):
+            if st.button(cat.get('name')):
+                st.session_state.active_cat = cat.get('id')
 
     # MAIN INTERFACE: 3 Columns
     col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
 
-    
-    # --- COLUMN 1: CSF SELECTION (Surgical Restoration) ---
+    # COLUMN 1: CSF Selection
     with col1:
         st.subheader("Critical Success Factors")
-        
-        # 1. Ensure we have a valid ID (Fallback to Governance)
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
+        category_node = root.find(f".//Category[@id='{active_cat_id}']")
         
-        # 2. NAMESPACE-AWARE SEARCH (Added ans: prefix and ns dict)
-        category_node = root.find(f".//ans:Category[@id='{active_cat_id}']", ns)
-        
-        if category_node is not None:
-            # Loop through CSF children using the global namespace
-            for csf in category_node.findall('ans:CSF', ns):
-                csf_id = csf.get('id')
-                csf_name = csf.get('name')
-                
-                # Check for Must items to drive the Success Tick logic
-                must_items = [i.text for i in csf.findall(".//ans:Item[@priority='Must']", ns)]
-                met_items = st.session_state.archived_status.get(csf_id, {})
-                is_complete = all(met_items.get(item) for item in must_items) if must_items else False
-                
-                display_label = f"{csf_name} ✅" if is_complete else csf_name
-                
-                # 3. Render Buttons with specific keys to prevent UI ghosting
-                is_active = st.session_state.active_csf == csf_id
-                if st.button(
-                    display_label, 
-                    key=f"nav_btn_{csf_id}", 
-                    type="primary" if is_active else "secondary",
-                    use_container_width=True
-                ):
-                    st.session_state.active_csf = csf_id
-                    st.session_state.chat_history = []
-                    st.rerun()
-        else:
-            # This identifies exactly what ID failed the search
-            st.info(f"Select a Category in the sidebar. (Current ID: {active_cat_id})")
+        for csf in category_node.findall('CSF'):
+            is_active = st.session_state.active_csf == csf.get('id')
+            if st.button(csf.get('name'), key=csf.get('id'), type="primary" if is_active else "secondary"):
+                st.session_state.active_csf = csf.get('id')
+                st.session_state.chat_history = [] # Reset chat for new context
 
     # COLUMN 2: The Validation Chat
     with col2:
-        # NAMESPACE-SAFE FIND
-        active_csf_node = root.find(f".//ans:CSF[@id='{st.session_state.active_csf}']", ns)
-        
-        if active_csf_node is not None:
-            st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
-        else:
-            st.subheader("💬 Waiting for Selection...")
+        active_csf_node = root.find(f".//CSF[@id='{st.session_state.active_csf}']")
+        st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
         
         chat_container = st.container(height=500)
         for msg in st.session_state.chat_history:
@@ -299,63 +211,30 @@ else:
                 st.write(msg["content"])
                 
         if user_input := st.chat_input("Provide evidence..."):
-            # --- 1. DEFINE CSF_CONTEXT FIRST ---
-            # This pulls the metadata from the currently selected XML node
-            active_csf_node = root.find(f".//ans:CSF[@id='{st.session_state.active_csf}']", ns)
-            
-            csf_context = {
-                'id': st.session_state.active_csf,
-                'name': active_csf_node.get('name'),
-                'type': active_csf_node.find('ans:Type', ns).text, # Binary or Proportional
-                'multiplier': active_csf_node.find('ans:Multiplier', ns).text,
-                'criteria': [i.text for i in active_csf_node.findall('.//ans:Item', ns)]
-        }
-            
-            # 1. Store user message
             st.session_state.chat_history.append({"role": "user", "content": user_input})
             
-            # 2. Get AI Response (Ensure csf_context is passed as defined previously)
-            response = get_auditor_response(user_input, csf_context)
+            # Get criteria for the AI
+            criteria_nodes = active_csf_node.findall(".//Item")
+            criteria_texts = [item.text for item in criteria_nodes]
             
-            # --- START INGESTION LOGIC ---
-            # A. Handle Binary Pass
-            if "[VALIDATE: ALL]" in response:
-                for item in csf_context['criteria']:
+            response = get_auditor_response(user_input, criteria_texts, st.session_state.active_csf)
+            
+            # Parse for [VALIDATE: ...] tags
+            for item in criteria_texts:
+                if f"[VALIDATE: {item}]" in response:
                     if st.session_state.active_csf not in st.session_state.archived_status:
                         st.session_state.archived_status[st.session_state.active_csf] = {}
                     st.session_state.archived_status[st.session_state.active_csf][item] = True
-                st.toast("✅ CSF FULLY VALIDATED")
+                    st.toast(f"✅ Criteria Met: {item[:20]}...")
 
-            # B. Handle Proportional Guess
-            import re
-            score_match = re.search(r"\[SCORE: (\d+\.\d+)\]", response)
-            if score_match:
-                current_score = float(score_match.group(1))
-                if "csf_scores" not in st.session_state:
-                    st.session_state.csf_scores = {}
-                st.session_state.csf_scores[st.session_state.active_csf] = current_score
-                st.toast(f"📊 Readiness Updated: {int(current_score * 100)}%")
-
-            # C. Handle individual item triggers
-            for item in csf_context['criteria']:
-                if f"[ITEM_MET: {item}]" in response:
-                    if st.session_state.active_csf not in st.session_state.archived_status:
-                        st.session_state.archived_status[st.session_state.active_csf] = {}
-                    st.session_state.archived_status[st.session_state.active_csf][item] = True
-            # --- END INGESTION LOGIC ---
-
-            # 3. Clean and store assistant message
-            clean_resp = re.sub(r"\[.*?\]", "", response).strip()
+            clean_resp = re.sub(r"\[.*?\]", "", response)
             st.session_state.chat_history.append({"role": "assistant", "content": clean_resp})
-            
-            # 4. Trigger rerun to update Checklist (Col 3) and Speedometer (Sidebar)
             st.rerun()
 
     # COLUMN 3: MoSCoW Status Boxes
     with col3:
         st.subheader("Requirement Checklist")
-        # FIX: Added ans: prefix and ns dictionary
-        criteria_nodes = active_csf_node.findall(".//ans:Item", ns) if active_csf_node is not None else []
+        criteria_nodes = active_csf_node.findall(".//Item")
         
         for item_node in criteria_nodes:
             text = item_node.text
