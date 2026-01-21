@@ -54,85 +54,145 @@ def get_auditor_response(prompt, criteria_list, csf_id):
     response = chat.send_message(f"{sys_instr}\n\nUser Evidence: {prompt}")
     return response.text
 
+def get_user_credentials():
+    creds = {"usernames": {}}
+    try:
+        # Stream operatives directly from the 'users' collection
+        users_ref = db.collection("users").stream()
+        for doc in users_ref:
+            data = doc.to_dict()
+            u_name = data.get("username")
+            if u_name:
+                creds["usernames"][u_name] = {
+                    "name": data.get("full_name"),
+                    "password": data.get("password"), 
+                    "email": data.get("email")
+                }
+    except Exception as e:
+        st.error(f"Intel Sync Error: {e}")
+    
+    # Fallback safety: ensures a 'None' return doesn't break the Authenticator
+    if not creds["usernames"]:
+        creds["usernames"]["admin"] = {"name": "System Admin", "password": "N/A", "email": "N/A"}
+    return creds
+
+# --- AUTHENTICATION GATEKEEPER ---
+credentials_data = get_user_credentials()
+
+if "authenticator" not in st.session_state:
+    st.session_state.authenticator = stauth.Authenticate(
+        credentials_data,
+        "spl_bid_cookie",
+        "spl_secret_key",
+        cookie_expiry_days=30
+    )
+
+authenticator = st.session_state.authenticator
+
+
 # --- 5. UI LAYOUT (3-COLUMN SKETCH) ---
-st.set_page_config(layout="wide", page_title="SPL Bid Readiness C2")
+st.set_page_config(layout="wide", page_title="SPL Bid Readiness")
 
 # Load XML data
 root = load_universal_schema('bidcheck-config.xml')
 
-# SIDEBAR: The Speedometer & Nav
-with st.sidebar:
-    st.header("🦅 TOTAL READINESS")
-    # Simple score math for the demo
-    total_score = sum([1 for csf in st.session_state.archived_status if any(st.session_state.archived_status[csf].values())])
-    st.metric("WEIGHTED SCORE", f"{total_score * 100}") # Placeholder for multiplier logic
+# --- THE MAIN UI WRAPPER ---
+if not st.session_state.get("authentication_status"):
+    # Render the Login UI
+    col_l, col_r = st.columns([1, 1], gap="large")
+    with col_l:
+        st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/panama-title2.jpg")
+        st.markdown("### SYSTEM ACCESS: BID READINESS C2")
+        st.info("Public buyers will often exclude bidders at SQ stage if basics are not watertight. ")
     
-    st.divider()
-    st.subheader("📁 Categories")
-    for cat in root.findall('Category'):
-        if st.button(cat.get('name')):
-            st.session_state.active_cat = cat.get('id')
+    with col_r:
+        auth_result = authenticator.login(location="main", key="spl_login")
+        if auth_result:
+            name, status, username = auth_result
+            if status:
+                st.session_state["authentication_status"] = True
+                st.session_state["username"] = username
+                st.rerun()
+            elif status == False:
+                st.error("Invalid Credentials. Access Denied.")
 
-# MAIN INTERFACE: 3 Columns
-col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
+else:
 
-# COLUMN 1: CSF Selection
-with col1:
-    st.subheader("Critical Success Factors")
-    active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
-    category_node = root.find(f".//Category[@id='{active_cat_id}']")
-    
-    for csf in category_node.findall('CSF'):
-        is_active = st.session_state.active_csf == csf.get('id')
-        if st.button(csf.get('name'), key=csf.get('id'), type="primary" if is_active else "secondary"):
-            st.session_state.active_csf = csf.get('id')
-            st.session_state.chat_history = [] # Reset chat for new context
+    # Render the Assess UI    
 
-# COLUMN 2: The Validation Chat
-with col2:
-    active_csf_node = root.find(f".//CSF[@id='{st.session_state.active_csf}']")
-    st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
-    
-    chat_container = st.container(height=500)
-    for msg in st.session_state.chat_history:
-        with chat_container.chat_message(msg["role"]):
-            st.write(msg["content"])
+    # SIDEBAR: The Speedometer & Nav
+    with st.sidebar:
+        st.header("🦅 TOTAL READINESS")
+        # Simple score math for the demo
+        total_score = sum([1 for csf in st.session_state.archived_status if any(st.session_state.archived_status[csf].values())])
+        st.metric("WEIGHTED SCORE", f"{total_score * 100}") # Placeholder for multiplier logic
+        
+        st.divider()
+        st.subheader("📁 Categories")
+        for cat in root.findall('Category'):
+            if st.button(cat.get('name')):
+                st.session_state.active_cat = cat.get('id')
+
+    # MAIN INTERFACE: 3 Columns
+    col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
+
+    # COLUMN 1: CSF Selection
+    with col1:
+        st.subheader("Critical Success Factors")
+        active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
+        category_node = root.find(f".//Category[@id='{active_cat_id}']")
+        
+        for csf in category_node.findall('CSF'):
+            is_active = st.session_state.active_csf == csf.get('id')
+            if st.button(csf.get('name'), key=csf.get('id'), type="primary" if is_active else "secondary"):
+                st.session_state.active_csf = csf.get('id')
+                st.session_state.chat_history = [] # Reset chat for new context
+
+    # COLUMN 2: The Validation Chat
+    with col2:
+        active_csf_node = root.find(f".//CSF[@id='{st.session_state.active_csf}']")
+        st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
+        
+        chat_container = st.container(height=500)
+        for msg in st.session_state.chat_history:
+            with chat_container.chat_message(msg["role"]):
+                st.write(msg["content"])
+                
+        if user_input := st.chat_input("Provide evidence..."):
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
             
-    if user_input := st.chat_input("Provide evidence..."):
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
-        
-        # Get criteria for the AI
+            # Get criteria for the AI
+            criteria_nodes = active_csf_node.findall(".//Item")
+            criteria_texts = [item.text for item in criteria_nodes]
+            
+            response = get_auditor_response(user_input, criteria_texts, st.session_state.active_csf)
+            
+            # Parse for [VALIDATE: ...] tags
+            for item in criteria_texts:
+                if f"[VALIDATE: {item}]" in response:
+                    if st.session_state.active_csf not in st.session_state.archived_status:
+                        st.session_state.archived_status[st.session_state.active_csf] = {}
+                    st.session_state.archived_status[st.session_state.active_csf][item] = True
+                    st.toast(f"✅ Criteria Met: {item[:20]}...")
+
+            clean_resp = re.sub(r"\[.*?\]", "", response)
+            st.session_state.chat_history.append({"role": "assistant", "content": clean_resp})
+            st.rerun()
+
+    # COLUMN 3: MoSCoW Status Boxes
+    with col3:
+        st.subheader("Requirement Checklist")
         criteria_nodes = active_csf_node.findall(".//Item")
-        criteria_texts = [item.text for item in criteria_nodes]
         
-        response = get_auditor_response(user_input, criteria_texts, st.session_state.active_csf)
-        
-        # Parse for [VALIDATE: ...] tags
-        for item in criteria_texts:
-            if f"[VALIDATE: {item}]" in response:
-                if st.session_state.active_csf not in st.session_state.archived_status:
-                    st.session_state.archived_status[st.session_state.active_csf] = {}
-                st.session_state.archived_status[st.session_state.active_csf][item] = True
-                st.toast(f"✅ Criteria Met: {item[:20]}...")
-
-        clean_resp = re.sub(r"\[.*?\]", "", response)
-        st.session_state.chat_history.append({"role": "assistant", "content": clean_resp})
-        st.rerun()
-
-# COLUMN 3: MoSCoW Status Boxes
-with col3:
-    st.subheader("Requirement Checklist")
-    criteria_nodes = active_csf_node.findall(".//Item")
-    
-    for item_node in criteria_nodes:
-        text = item_node.text
-        priority = item_node.get("priority")
-        is_met = st.session_state.archived_status.get(st.session_state.active_csf, {}).get(text, False)
-        
-        # Color coding based on your sketch
-        bg_color = "#28a745" if is_met else ("#dc3545" if priority == "Must" else "#ffc107")
-        st.markdown(f"""
-            <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin-bottom:10px; color:white; font-weight:bold;">
-                [{priority.upper()}] {text}
-            </div>
-        """, unsafe_allow_html=True)
+        for item_node in criteria_nodes:
+            text = item_node.text
+            priority = item_node.get("priority")
+            is_met = st.session_state.archived_status.get(st.session_state.active_csf, {}).get(text, False)
+            
+            # Color coding based on your sketch
+            bg_color = "#28a745" if is_met else ("#dc3545" if priority == "Must" else "#ffc107")
+            st.markdown(f"""
+                <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin-bottom:10px; color:white; font-weight:bold;">
+                    [{priority.upper()}] {text}
+                </div>
+            """, unsafe_allow_html=True)
