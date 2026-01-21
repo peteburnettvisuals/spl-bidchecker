@@ -212,16 +212,18 @@ else:
 
     # Render the Assess UI    
 
-    # SIDEBAR: The Speedometer & Nav
+    # --- SIDEBAR: THE SPEEDOMETER & NAV ---
     with st.sidebar:
         st.header("🦅 TOTAL READINESS")
+        
+        # Ensure live_score can access the global namespace 'ns'
         live_score = calculate_live_score(root, st.session_state.archived_status)
         st.metric("WEIGHTED SCORE", f"{live_score} PTS")
         
         st.divider()
         st.subheader("📁 Categories")
         
-        # Use 'ans:' and 'ns' to ensure the categories are found
+        # FIX: Use 'ans:' prefix and pass the 'ns' dictionary to find nodes
         category_nodes = root.findall('ans:Category', ns)
         
         for cat in category_nodes:
@@ -229,8 +231,14 @@ else:
             cat_id = cat.get('id')
             
             # Defining variables inside a successful loop prevents the NameError
-            if st.button(cat_name, key=f"side_{cat_id}"):
+            if st.button(cat_name, key=f"side_nav_{cat_id}"):
                 st.session_state.active_cat = cat_id
+                # Reset active_csf to the first item of the new category to avoid ghosting
+                first_csf = cat.find('ans:CSF', ns)
+                if first_csf is not None:
+                    st.session_state.active_csf = first_csf.get('id')
+                
+                st.session_state.chat_history = []
                 st.rerun()
 
     # MAIN INTERFACE: 3 Columns
@@ -238,14 +246,13 @@ else:
 
     
     # --- COLUMN 1: CSF SELECTION (Surgical Restoration) ---
-    # --- COLUMN 1: CSF SELECTION (Surgical Restoration) ---
     with col1:
         st.subheader("Critical Success Factors")
         
-        # 1. Get the current category from state or default to Governance
+        # 1. Ensure we have a valid ID (Fallback to Governance)
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
         
-        # 2. STRICT NAMESPACE FIND: This is the missing link
+        # 2. NAMESPACE-AWARE SEARCH (Added ans: prefix and ns dict)
         category_node = root.find(f".//ans:Category[@id='{active_cat_id}']", ns)
         
         if category_node is not None:
@@ -254,15 +261,14 @@ else:
                 csf_id = csf.get('id')
                 csf_name = csf.get('name')
                 
-                # Tick Logic: Check if all 'Must' items for this CSF are validated
+                # Check for Must items to drive the Success Tick logic
                 must_items = [i.text for i in csf.findall(".//ans:Item[@priority='Must']", ns)]
                 met_items = st.session_state.archived_status.get(csf_id, {})
                 is_complete = all(met_items.get(item) for item in must_items) if must_items else False
                 
-                # Apply tick icon if complete
                 display_label = f"{csf_name} ✅" if is_complete else csf_name
                 
-                # 3. Render Buttons with unique keys
+                # 3. Render Buttons with specific keys to prevent UI ghosting
                 is_active = st.session_state.active_csf == csf_id
                 if st.button(
                     display_label, 
@@ -274,13 +280,18 @@ else:
                     st.session_state.chat_history = []
                     st.rerun()
         else:
-            # This fallback confirms if the category search failed
-            st.info("Select a Category in the sidebar to load factors.")
+            # This identifies exactly what ID failed the search
+            st.info(f"Select a Category in the sidebar. (Current ID: {active_cat_id})")
 
     # COLUMN 2: The Validation Chat
     with col2:
-        active_csf_node = root.find(f".//CSF[@id='{st.session_state.active_csf}']")
-        st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
+        # NAMESPACE-SAFE FIND
+        active_csf_node = root.find(f".//ans:CSF[@id='{st.session_state.active_csf}']", ns)
+        
+        if active_csf_node is not None:
+            st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
+        else:
+            st.subheader("💬 Waiting for Selection...")
         
         chat_container = st.container(height=500)
         for msg in st.session_state.chat_history:
@@ -343,7 +354,8 @@ else:
     # COLUMN 3: MoSCoW Status Boxes
     with col3:
         st.subheader("Requirement Checklist")
-        criteria_nodes = active_csf_node.findall(".//Item")
+        # FIX: Added ans: prefix and ns dictionary
+        criteria_nodes = active_csf_node.findall(".//ans:Item", ns) if active_csf_node is not None else []
         
         for item_node in criteria_nodes:
             text = item_node.text
