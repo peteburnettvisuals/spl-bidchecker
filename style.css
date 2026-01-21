@@ -118,3 +118,24 @@ div.stButton button p {
 .st-emotion-cache-19rxjzo p {
     color: #000000 !important;
 }
+
+/* TARGET AUTHENTICATOR WIDGET BUTTONS */
+/* This forces the Login/Register buttons to match your UI buttons */
+div[data-testid="stForm"] button, 
+.st-emotion-cache-19rxjzo,
+div[data-testid="stSidebar"] button {
+    background-color: #FFFFFF !important;
+    color: #000000 !important; /* Force Black Text */
+    border: 1px solid #70e2ff !important;
+    font-weight: bold !important;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px rgba(112, 226, 255, 0.3);
+}
+
+/* AUTH BUTTON HOVER: Corporate Cyan Glow */
+div[data-testid="stForm"] button:hover,
+.st-emotion-cache-19rxjzo:hover {
+    background-color: #70e2ff !important;
+    color: #000000 !important;
+    box-shadow: 0 0 15px #70e2ff;
+}
