@@ -55,54 +55,46 @@ h1, h2, h3, .stMetric, p, span, label {
     box-shadow: 0 0 10px rgba(255, 140, 0, 0.3);
 }
 
-/* 8. TACTICAL BUTTONS: HIGH CONTRAST */
-div.stButton > button, div[data-testid="stForm"] button {
-    background-color: #FFFFFF !important; 
-    color: #000000 !important;
-    border-radius: 2px !important;
-    border: none !important;
-    font-weight: bold !important;
-    text-transform: uppercase;
-    transition: 0.2s ease;
-    box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.4);
-}
-
-div.stButton > button:hover {
-    background-color: #E0E0E0 !important;
-    box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.8);
-}
-
-/* 9. INPUT FIELDS: BLACK TEXT ON WHITE */
-input {
-    color: #000000 !important;
-    background-color: #FFFFFF !important;
-}
-
-/* TARGET ALL BUTTONS (Sidebar, Auth, and Columns) */
+/* --- SURGICAL BUTTON FIX --- */
+/* This targets the button, the hover state, and the specific Streamlit cache classes */
 div.stButton > button, 
 div[data-testid="stForm"] button,
-.st-emotion-cache-19rxjzo { 
+button[kind="primary"],
+button[kind="secondary"] { 
     background-color: #FFFFFF !important; 
-    color: #000000 !important; /* Force Black Text */
-    border: 1px solid #FFFFFF !important;
+    color: #000000 !important; /* FORCED BLACK TEXT */
+    border: 1px solid #70e2ff !important;
     font-weight: bold !important;
     text-transform: uppercase;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    width: 100%; /* Ensures alignment in Col 1 */
+    box-shadow: 0 0 10px rgba(112, 226, 255, 0.4);
+    transition: 0.3s all ease-in-out;
 }
 
-/* HOVER EFFECT: Invert to "Gundogs Orange" for interaction feedback */
+/* --- CORPORATE CYAN HOVER --- */
 div.stButton > button:hover {
     background-color: #70e2ff !important;
     color: #000000 !important;
-    border: 1px solid #70e2ff !important;
-    box-shadow: 0 0 15px #70e2ff;
+    box-shadow: 0 0 20px #70e2ff;
+    border: 1px solid #FFFFFF !important;
 }
 
-/* FIX FOR TAB HEADERS (Register/Login) */
+/* --- TAB HEADER FIX (Login/Register) --- */
+button[data-baseweb="tab"] {
+    border-bottom: 2px solid transparent !important;
+}
+
 button[data-baseweb="tab"] p {
-    color: #FFFFFF !important;
+    color: #F0F8FF !important; /* White Phosphor text for unselected tabs */
+    font-size: 1.1rem !important;
 }
 
 button[aria-selected="true"] {
-    border-bottom-color: #70e2ff !important;
+    background-color: rgba(112, 226, 255, 0.1) !important;
+    border-bottom: 3px solid #70e2ff !important;
+}
+
+button[aria-selected="true"] p {
+    color: #70e2ff !important; /* Selected tab glows Cyan */
+    text-shadow: 0 0 10px #70e2ff;
 }
