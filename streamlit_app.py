@@ -65,23 +65,19 @@ def get_auditor_response(prompt, criteria_list, csf_id):
 def get_user_credentials():
     creds = {"usernames": {}}
     try:
-        # Stream users directly from Firestore
         users_ref = db.collection("users").stream()
         for doc in users_ref:
             data = doc.to_dict()
-            # We use the 'email' field as the 'username' key for the authenticator
-            email_id = data.get("email")
-            if email_id:
-                creds["usernames"][email_id] = {
+            # USE EMAIL AS THE KEY: The login widget will match against this
+            email_key = data.get("email") 
+            if email_key:
+                creds["usernames"][email_key] = {
                     "name": data.get("full_name"),
-                    "password": data.get("password"), 
-                    "company": data.get("company")  # Added company tracking
+                    "password": data.get("password"),
+                    "company": data.get("company")
                 }
     except Exception as e:
-        st.error(f"Intel Sync Error: {e}")
-    
-    if not creds["usernames"]:
-        creds["usernames"]["admin@example.com"] = {"name": "Admin", "password": "N/A"}
+        st.error(f"Credential Sync Error: {e}")
     return creds
 
 # --- AUTHENTICATION GATEKEEPER ---
@@ -141,10 +137,10 @@ if not st.session_state.get("authentication_status"):
                 
                 if submit_reg:
                     if new_email and new_password and new_company:
-                        # 1. Hash the password
-                        hashed_password = stauth.Hasher([new_password]).generate()[0]
+                        # UPDATED SYNTAX: No more .generate()[0]
+                        hashed_password = stauth.Hasher.hash(new_password)
                         
-                        # 2. Save to Firestore using email as the Document ID
+                        # Save to Firestore using email as the unique Document ID
                         db.collection("users").document(new_email).set({
                             "email": new_email,
                             "company": new_company,
