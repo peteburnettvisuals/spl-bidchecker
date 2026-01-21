@@ -68,16 +68,19 @@ def get_user_credentials():
         users_ref = db.collection("users").stream()
         for doc in users_ref:
             data = doc.to_dict()
-            # USE EMAIL AS THE KEY: The login widget will match against this
-            email_key = data.get("email") 
-            if email_key:
-                creds["usernames"][email_key] = {
+            
+            # THE FIX: Assign the email field to the 'u_name' variable
+            # This tells the login widget to treat the email as the username
+            u_name = data.get("email") 
+            
+            if u_name:
+                creds["usernames"][u_name] = {
                     "name": data.get("full_name"),
-                    "password": data.get("password"),
+                    "password": data.get("password"), 
                     "company": data.get("company")
                 }
     except Exception as e:
-        st.error(f"Credential Sync Error: {e}")
+        st.error(f"Intel Sync Error: {e}")
     return creds
 
 # --- AUTHENTICATION GATEKEEPER ---
