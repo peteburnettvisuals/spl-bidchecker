@@ -8,6 +8,13 @@ from google.cloud import firestore
 from google.oauth2 import service_account
 import streamlit_authenticator as stauth
 
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+local_css("style.css")
+
+
 # --- 1. TACTICAL SECRET & DB LOADER (MAINTAINED) ---
 try:
     credentials_info = st.secrets["gcp_service_account_firestore"]
@@ -101,7 +108,7 @@ if not st.session_state.get("authentication_status"):
     # Render the Login UI
     col_l, col_r = st.columns([1, 1], gap="large")
     with col_l:
-        st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/panama-title2.jpg")
+        st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/bidsys-title.png")
         st.markdown("### SYSTEM ACCESS: BID READINESS C2")
         st.info("Public buyers will often exclude bidders at SQ stage if basics are not watertight. ")
     

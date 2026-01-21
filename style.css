@@ -1,64 +1,36 @@
 /* ==========================================
-   GUNDOG COMMAND & CONTROL HUD
+   SPL BID READINESS C2: WHITE PHOSPHOR HUD
    ========================================== */
 
-/* 1. GLOBAL UI & CRT EFFECTS */
+/* 1. GLOBAL UI & BACKGROUND */
 .stApp {
     background-image: url("https://peteburnettvisuals.com/wp-content/uploads/2026/01/brs-background.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    color: #00FF41 !important;
+    color: #FFFFFF !important;
     font-family: 'Courier New', Courier, monospace;
 }
 
-/* 2. SIDEBAR & GREEN PHOSPHOR ELEMENTS */
+/* 2. SIDEBAR: DEEP NAVY/BLACK BASE */
 [data-testid="stSidebar"] {
-    background-color: #020502 !important;
-    border-right: 1px solid #00FF41 !important;
+    background-color: rgba(2, 5, 10, 0.95) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
+/* 3. WHITE PHOSPHOR GLOW FOR HEADERS */
 h1, h2, h3, .stMetric, p, span, label {
-    color: #a2fcb9 !important;
-    text-shadow: 0 0 10px #00FF41;
+    color: #F0F8FF !important; /* Alice Blue / White Phosphor */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
 }
 
-/* 3. URGENT METRICS: SAFETY ORANGE */
+/* 4. METRICS: KEEP SAFETY ORANGE FOR URGENCY */
 [data-testid="stMetricValue"] {
     color: #FF8C00 !important; 
-    text-shadow: 0 0 15px #FF8C00;
+    text-shadow: 0 0 12px #FF8C00;
 }
 
-/* 4. TOTAL BLACKOUT: BOTTOM & FOOTER */
-[data-testid="stBottomBlockContainer"], 
-.stChatInput, 
-div[data-testid="stChatInput"],
-footer,
-header {
-    background-color: #050805 !important;
-    border: none !important;
-}
-
-/* 5. THE AMBER COMMAND CAPSULE */
-[data-testid="stChatInputContainer"] {
-    background-color: #111111 !important; 
-    border: 2px solid #FF8C00 !important; 
-    border-radius: 25px !important;
-    box-shadow: 0 0 15px rgba(255, 140, 0, 0.4);
-}
-
-[data-testid="stChatInput"] textarea {
-    color: #111111 !important;
-    font-size: 1.1rem !important;
-    font-weight: bold !important;
-    background-color: transparent !important;
-    caret-color: #FF8C00 !important;
-}
-
-
-
-/* 7. THE CURTAIN KILLER (Transparency Patch) */
-/* These specific selectors remove the black layers hiding your background */
+/* 5. TRANSPARENCY PATCH (The "Curtain Killer") */
 [data-testid="stAppViewContainer"],
 .main,
 .block-container,
@@ -67,126 +39,41 @@ header {
     background-color: transparent !important;
 }
 
+/* 6. THREE-COLUMN THEATER: CHAT BUBBLES */
 [data-testid="stChatMessage"] {
-    background-color: rgba(0, 255, 65, 0.07) !important;
-    border: 1px solid rgba(0, 255, 65, 0.2) !important;
-    border-radius: 10px;
-    backdrop-filter: blur(2px); /* Frost effect for tactical depth */
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
 }
 
-/* DISABLE FULL SCREEN ON IMAGES */
-/* This hides the "Expand" button that appears on hover */
-button[title="View fullscreen"] {
-    display: none !important;
+/* 7. THE AMBER COMMAND CAPSULE (Col 2 Input) */
+[data-testid="stChatInputContainer"] {
+    background-color: #000000 !important; 
+    border: 1px solid #FF8C00 !important; 
+    border-radius: 4px !important;
+    box-shadow: 0 0 10px rgba(255, 140, 0, 0.3);
 }
 
-/* This disables clicking on the image itself to prevent opening it */
-[data-testid="stImage"] img {
-    pointer-events: none !important;
-    cursor: default !important;
-}
-
-/* INCREASE CHAT FONT SIZE */
-.chat-message p {
-    font-size: 1.1rem !important; /* Adjust from 1.0 to 1.1 or 1.2 for desired 'tad' increase */
-    line-height: 1.5 !important;  /* Improves readability between lines */
-    font-weight: 500 !important;   /* Slightly bolder for better contrast */
-}
-
-/* TARGETS THE SQUAD NAME IN BRACKETS */
-.chat-message b {
-    font-size: 1.15rem !important;
-    letter-spacing: 0.5px;
-}
-
-/* ADD TACTICAL GLOW TO MAP TOKENS */
-.leaflet-marker-icon {
-    border-radius: 50%;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.6); /* Gundog Green glow */
-    border: 1px solid #00FF00 !important;
-}
-
-/* 1. DARK TOASTS: Fixes the light green on white visibility issue */
-[data-testid="stToast"] {
-    background-color: #050505 !important;
-    border: 1px solid #00FF00 !important;
-    border-radius: 5px;
-}
-
-[data-testid="stToast"] [data-testid="stMarkdownContainer"] p {
-    color: #00FF00 !important;
-    font-family: 'Courier New', Courier, monospace;
-    font-weight: bold;
-}
-
-/* 2. ABORT BUTTON: High-contrast Alert Styling */
-div.stButton > button:first-child {
-    background-color: #1a0000 !important; /* Deep red background */
-    color: #FF3333 !important;           /* Bright red text */
-    border: 1px solid #FF3333 !important;
-    font-weight: bold;
+/* 8. TACTICAL BUTTONS: HIGH CONTRAST */
+div.stButton > button, div[data-testid="stForm"] button {
+    background-color: #FFFFFF !important; 
+    color: #000000 !important;
+    border-radius: 2px !important;
+    border: none !important;
+    font-weight: bold !important;
     text-transform: uppercase;
+    transition: 0.2s ease;
+    box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.4);
 }
 
 div.stButton > button:hover {
-    background-color: #FF3333 !important; /* Flash red on hover */
-    color: #000000 !important;
+    background-color: #E0E0E0 !important;
+    box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.8);
 }
 
-/* Add this to your style.css if you want a tail on the map bubbles */
-.leaflet-div-icon {
-    background: transparent !important;
-    border: none !important;
-}
-
-/* style.css */
-[data-testid="stChatMessage"]:has(div[aria-label="Storage for agency hq"]) {
-    background-color: rgba(255, 166, 0, 0.1) !important; /* Slight Amber tint */
-    border: 1px solid #ffa600;
-    font-family: 'Courier New', Courier, monospace;
-    border-left: 5px solid #ffa600;
-}
-
-/* Make the 'Start' button look like a tactical prompt */
-div.stButton > button {
-    background-color: #00FF00 !important;
-    color: black !important;
-    font-weight: bold;
-    border-radius: 0px;
-    border: 2px solid #00AA00;
-}
-
-/* Target all Streamlit buttons and Authenticator widgets */
-div.stButton > button, div[data-testid="stForm"] button {
-    background-color: #111111 !important; /* Gundog Neon Green */
-    color: #00ff00 !important;            /* Pure Black Text for contrast */
-    border-radius: 4px !important;
-    border: none !important;
-    font-weight: bold !important;
-    transition: 0.3s ease;
-    box-shadow: 0px 0px 10px #00FF00;     /* Neon tactical glow */
-}
-
-/* Add a hover effect for a reactive UI feel */
-div.stButton > button:hover, div[data-testid="stForm"] button:hover {
-    background-color: #333333 !important; /* Gundog Neon Green */
-    box-shadow: 0px 0px 10px #44FF44;     /* Neon tactical glow */
-}
-
-/* Force all text inputs to have high-contrast black text */
+/* 9. INPUT FIELDS: BLACK TEXT ON WHITE */
 input {
     color: #000000 !important;
-    font-weight: 500 !important;
-}
-
-/* Ensure the background remains stable to prevent flickering */
-.stTextInput > div > div > input {
     background-color: #FFFFFF !important;
 }
-
-/* Optional: Add a neon green focus border to match the Gundogs aesthetic */
-input:focus {
-    border-color: #00FF00 !important;
-    box-shadow: 0 0 5px #00FF00 !important;
-}
-
