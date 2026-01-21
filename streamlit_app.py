@@ -65,23 +65,23 @@ def get_auditor_response(prompt, criteria_list, csf_id):
 def get_user_credentials():
     creds = {"usernames": {}}
     try:
-        # Stream operatives directly from the 'users' collection
+        # Stream users directly from Firestore
         users_ref = db.collection("users").stream()
         for doc in users_ref:
             data = doc.to_dict()
-            u_name = data.get("username")
-            if u_name:
-                creds["usernames"][u_name] = {
+            # We use the 'email' field as the 'username' key for the authenticator
+            email_id = data.get("email")
+            if email_id:
+                creds["usernames"][email_id] = {
                     "name": data.get("full_name"),
                     "password": data.get("password"), 
-                    "email": data.get("email")
+                    "company": data.get("company")  # Added company tracking
                 }
     except Exception as e:
         st.error(f"Intel Sync Error: {e}")
     
-    # Fallback safety: ensures a 'None' return doesn't break the Authenticator
     if not creds["usernames"]:
-        creds["usernames"]["admin"] = {"name": "System Admin", "password": "N/A", "email": "N/A"}
+        creds["usernames"]["admin@example.com"] = {"name": "Admin", "password": "N/A"}
     return creds
 
 # --- AUTHENTICATION GATEKEEPER ---
@@ -115,7 +115,7 @@ if not st.session_state.get("authentication_status"):
     
     with col_r: # This is the right-hand column from your login screen
         st.header("System Access")
-        tab_login, tab_register = st.tabs(["Resume Assessment", "Register New Account"])
+        tab_register, tab_login = st.tabs(["Register New Account", "Resume Assessment"])
         
         with tab_login:
             # Standard login widget
@@ -132,31 +132,32 @@ if not st.session_state.get("authentication_status"):
         with tab_register:
             st.subheader("New User Registration")
             with st.form("registration_form"):
-                new_email = st.text_input("Corporate Email")
-                new_username = st.text_input("Requested Username")
+                new_email = st.text_input("Corporate/Work Email")
+                new_company = st.text_input("Company Name")
                 new_name = st.text_input("Full Name")
                 new_password = st.text_input("Password", type="password")
                 
                 submit_reg = st.form_submit_button("Register")
                 
                 if submit_reg:
-                    if new_email and new_username and new_password:
-                        # 1. Hash the password for security
+                    if new_email and new_password and new_company:
+                        # 1. Hash the password
                         hashed_password = stauth.Hasher([new_password]).generate()[0]
                         
-                        # 2. Uplink to Firestore 'users' collection
+                        # 2. Save to Firestore using email as the Document ID
                         db.collection("users").document(new_email).set({
                             "email": new_email,
-                            "username": new_username,
+                            "company": new_company,
                             "full_name": new_name,
                             "password": hashed_password,
                             "created_at": firestore.SERVER_TIMESTAMP,
-                            "role": "SME"
                         })
                         
-                        st.success(f"User {new_username} registered. Proceed to 'Resume' tab to login.")
+                        st.success(f"Company {new_company} registered. Use your email to login.")
                         time.sleep(2)
                         st.rerun()
+                    else:
+                        st.warning("Please fill in all mandatory fields.")
 
 else:
 
