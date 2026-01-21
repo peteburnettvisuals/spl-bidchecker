@@ -23,10 +23,10 @@
                 <Multiplier>50</Multiplier>
                 <Type>Proportional</Type>
                 <Criteria>
-                    <Item priority="Must">- Policies must able to to be produced and supplied within 24 hours</Item>
-                    <Item priority="Must">- Policies must not contain contradictions as a group (ie Policy A says something different to policy B)</Item>
-                    <Item priority="Must">- Must not be an internet copy referencing irrelevant legislation</Item>
-                    <Item priority="Must">- Must comply with procurement body legislation</Item>
+                    <Item priority="Must">Policies must able to to be produced and supplied within 24 hours</Item>
+                    <Item priority="Must">Policies must not contain contradictions as a group (ie Policy A says something different to policy B)</Item>
+                    <Item priority="Must">Must not be an internet copy referencing irrelevant legislation</Item>
+                    <Item priority="Must">Must comply with procurement body legislation</Item>
                 </Criteria>
             </CanonicalAttributes>
             <SpecificAttributes>
@@ -44,10 +44,10 @@
                 <Multiplier>2.0</Multiplier>
                 <Type>Proportional</Type>
                 <Criteria>
-                    <Item priority="Must">- Must Measurable commitments, not aspirations</Item>
-                    <Item priority="Must">- Must comply with procurement body legislation</Item>
-                    <Item priority="Should">- Include reference to the creation of local jobs and apprenticeships</Item>
-                    <Item priority="Should">- Include reference fuel poverty support</Item>
+                    <Item priority="Must">Include Measurable commitments, not aspirations</Item>
+                    <Item priority="Must">Comply with procurement body legislation</Item>
+                    <Item priority="Should">Include reference to the creation of local jobs and apprenticeships</Item>
+                    <Item priority="Should">Include reference fuel poverty support</Item>
                 </Criteria>
             </CanonicalAttributes>
         </CSF>

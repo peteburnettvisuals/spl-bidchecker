@@ -15,6 +15,8 @@ def local_css(file_name):
 
 local_css("style.css")
 
+ns = {'ans': 'http://example.org/assessment'}
+
 
 # --- 1. TACTICAL SECRET & DB LOADER (MAINTAINED) ---
 try:
@@ -45,21 +47,37 @@ if "archived_status" not in st.session_state:
     st.session_state.archived_status = {}
 
 # --- 4. THE AI AUDITOR ENGINE ---
-def get_auditor_response(prompt, criteria_list, csf_id):
+def get_auditor_response(user_input, csf_data):
+    """
+    csf_data is a dict containing:
+    'id', 'name', 'type', 'multiplier', 'criteria'
+    """
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.0-flash')
     
-    # System Instruction: AI acts as a Bid Auditor
+    # Contextual prompt construction based on XML attributes
+    criteria_str = "\n".join([f"- {c}" for c in csf_data['criteria']])
+    
     sys_instr = f"""
-    You are the SPL Bid Auditor. Your goal is to validate if the user meets these criteria: {criteria_list}.
-    If evidence is sufficient for a specific item, append [VALIDATE: item_text].
-    If the entire CSF is satisfied, append [CSF_ARCHIVE: {csf_id}=SUCCESS].
-    Be professional, cynical like a procurement officer, and demand proof. 
+    ROLE: SPL Lead Auditor (Corporate/Procurement Focus).
+    CSF CONTEXT: {csf_data['name']} (ID: {csf_data['id']}).
+    MODE: {csf_data['type']} Evaluation.
+    
+    CRITERIA STANDARDS:
+    {criteria_str}
+    
+    INSTRUCTIONS:
+    1. Conduct a professional handshake. Ask the user if they believe they currently meet the criteria regarding this particular CSF. For instance, if it is a document or policy, does it meet the requirements shown?
+    2. If MODE is 'Binary': Decide if the response indicates a total 'SUCCESS'. If so, append [VALIDATE: ALL].
+    3. If MODE is 'Proportional': Evaluate 'fitness for purpose' (0.0 to 1.0). Append [SCORE: 0.X] based on your best guess of readiness.
+    4. For individual criteria met, append [ITEM_MET: Exact Criteria Text].
+    5. Maintain a professional, forensic tone.
     """
     
-    chat = model.start_chat(history=[])
-    response = chat.send_message(f"{sys_instr}\n\nUser Evidence: {prompt}")
+    # Maintain session context for the specific CSF
+    chat = model.start_chat(history=st.session_state.chat_history)
+    response = chat.send_message(f"{sys_instr}\n\nUser Evidence: {user_input}")
     return response.text
 
 def get_user_credentials():
@@ -98,7 +116,6 @@ authenticator = st.session_state.authenticator
 
 def calculate_live_score(root, archived_status):
     total_weighted = 0
-    ns = {'ans': 'http://example.org/assessment'}
     
     for category in root.findall('ans:Category', ns):
         for csf in category.findall('ans:CSF', ns):
@@ -233,40 +250,87 @@ else:
                 st.write(msg["content"])
                 
         if user_input := st.chat_input("Provide evidence..."):
+            # --- 1. DEFINE CSF_CONTEXT FIRST ---
+            # This pulls the metadata from the currently selected XML node
+            active_csf_node = root.find(f".//ans:CSF[@id='{st.session_state.active_csf}']", ns)
+            
+            csf_context = {
+                'id': st.session_state.active_csf,
+                'name': active_csf_node.get('name'),
+                'type': active_csf_node.find('ans:Type', ns).text, # Binary or Proportional
+                'multiplier': active_csf_node.find('ans:Multiplier', ns).text,
+                'criteria': [i.text for i in active_csf_node.findall('.//ans:Item', ns)]
+        }
+            
+            # 1. Store user message
             st.session_state.chat_history.append({"role": "user", "content": user_input})
             
-            # Get criteria for the AI
-            criteria_nodes = active_csf_node.findall(".//Item")
-            criteria_texts = [item.text for item in criteria_nodes]
+            # 2. Get AI Response (Ensure csf_context is passed as defined previously)
+            response = get_auditor_response(user_input, csf_context)
             
-            response = get_auditor_response(user_input, criteria_texts, st.session_state.active_csf)
-            
-            # Parse for [VALIDATE: ...] tags
-            for item in criteria_texts:
-                if f"[VALIDATE: {item}]" in response:
+            # --- START INGESTION LOGIC ---
+            # A. Handle Binary Pass
+            if "[VALIDATE: ALL]" in response:
+                for item in csf_context['criteria']:
                     if st.session_state.active_csf not in st.session_state.archived_status:
                         st.session_state.archived_status[st.session_state.active_csf] = {}
                     st.session_state.archived_status[st.session_state.active_csf][item] = True
-                    st.toast(f"✅ Criteria Met: {item[:20]}...")
+                st.toast("✅ CSF FULLY VALIDATED")
 
-            clean_resp = re.sub(r"\[.*?\]", "", response)
+            # B. Handle Proportional Guess
+            import re
+            score_match = re.search(r"\[SCORE: (\d+\.\d+)\]", response)
+            if score_match:
+                current_score = float(score_match.group(1))
+                if "csf_scores" not in st.session_state:
+                    st.session_state.csf_scores = {}
+                st.session_state.csf_scores[st.session_state.active_csf] = current_score
+                st.toast(f"📊 Readiness Updated: {int(current_score * 100)}%")
+
+            # C. Handle individual item triggers
+            for item in csf_context['criteria']:
+                if f"[ITEM_MET: {item}]" in response:
+                    if st.session_state.active_csf not in st.session_state.archived_status:
+                        st.session_state.archived_status[st.session_state.active_csf] = {}
+                    st.session_state.archived_status[st.session_state.active_csf][item] = True
+            # --- END INGESTION LOGIC ---
+
+            # 3. Clean and store assistant message
+            clean_resp = re.sub(r"\[.*?\]", "", response).strip()
             st.session_state.chat_history.append({"role": "assistant", "content": clean_resp})
+            
+            # 4. Trigger rerun to update Checklist (Col 3) and Speedometer (Sidebar)
             st.rerun()
 
-    # COLUMN 3: MoSCoW Status Boxes
-    with col3:
-        st.subheader("Requirement Checklist")
-        criteria_nodes = active_csf_node.findall(".//Item")
+    # --- COLUMN 3: MoSCoW STATUS BOXES ---
+with col3:
+    st.subheader("Requirement Checklist")
+    
+    # 1. Fetch the items using the global namespace
+    criteria_nodes = active_csf_node.findall(".//ans:Item", ns)
+    
+    for item_node in criteria_nodes:
+        text = item_node.text
+        priority = item_node.get("priority") # 'Must' or 'Should'
         
-        for item_node in criteria_nodes:
-            text = item_node.text
-            priority = item_node.get("priority")
-            is_met = st.session_state.archived_status.get(st.session_state.active_csf, {}).get(text, False)
+        # 2. Check the ledger to see if this specific item is met
+        is_met = st.session_state.archived_status.get(st.session_state.active_csf, {}).get(text, False)
+        
+        # 3. Dynamic Color Logic
+        if is_met:
+            bg_color = "#28a745"  # Validated Green
+            status_label = "VALIDATED"
+        elif priority == "Must":
+            bg_color = "#dc3545"  # High-Risk Red
+            status_label = "MUST"
+        else:
+            bg_color = "#ffc107"  # Warning Amber
+            status_label = "SHOULD"
             
-            # Color coding based on your sketch
-            bg_color = "#28a745" if is_met else ("#dc3545" if priority == "Must" else "#ffc107")
-            st.markdown(f"""
-                <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin-bottom:10px; color:white; font-weight:bold;">
-                    [{priority.upper()}] {text}
-                </div>
-            """, unsafe_allow_html=True)
+        # 4. Render high-contrast Phosphor box
+        st.markdown(f"""
+            <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin-bottom:10px; color:white;">
+                <small style="font-weight:bold; opacity:0.8;">[{status_label}]</small><br>
+                <span style="font-weight:bold; font-size:1.1rem;">{text}</span>
+            </div>
+        """, unsafe_allow_html=True)
