@@ -114,16 +114,21 @@ if not st.session_state.get("authentication_status"):
         tab_register, tab_login = st.tabs(["Register New Account", "Resume Assessment"])
         
         with tab_login:
-            # Standard login widget
+            # 1. Standard login widget
             auth_result = authenticator.login(location="main", key="spl_login_form")
-            if auth_result:
-                name, status, username = auth_result
-                if status:
-                    st.session_state["authentication_status"] = True
-                    st.session_state["username"] = username
-                    st.rerun()
-                elif status == False:
-                    st.error("Invalid Credentials. Check Your details.")
+            
+            # 2. THE SILENT GATE: Catch the login the moment it happens
+            if st.session_state.get("authentication_status"):
+                # Inject credentials into session state for global access
+                st.session_state["username"] = st.session_state["username"]
+                st.session_state["name"] = st.session_state["name"]
+                
+                st.toast(f"Authentication Successful. Accessing SPL C2...")
+                time.sleep(0.5) 
+                st.rerun() # This triggers the 'else' block immediately
+                
+            elif st.session_state.get("authentication_status") is False:
+                st.error("Invalid Credentials. Check your corporate email and password.")
 
         with tab_register:
             st.subheader("New User Registration")
