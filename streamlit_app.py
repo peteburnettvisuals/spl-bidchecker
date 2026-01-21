@@ -118,7 +118,12 @@ if not st.session_state.get("authentication_status"):
         
         with tab_login:
             # 1. Standard login widget
-            auth_result = authenticator.login(location="main", key="spl_login_form")
+            # UPDATED: Use the 'fields' parameter to relabel the Username box to Email
+            auth_result = authenticator.login(
+                location="main", 
+                key="spl_login_form",
+                fields={'Form name': 'Login', 'Username': 'Corporate Email', 'Password': 'Password'}
+    )
             
             # 2. THE SILENT GATE: Catch the login the moment it happens
             if st.session_state.get("authentication_status"):
