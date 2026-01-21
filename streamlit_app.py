@@ -229,7 +229,7 @@ else:
             cat_id = cat.get('id')
             
             # Defining variables inside a successful loop prevents the NameError
-            if st.button(cat_name, key=f"sidebar_nav_{cat_id}"):
+            if st.button(cat_name, key=f"side_{cat_id}"):
                 st.session_state.active_cat = cat_id
                 st.rerun()
 
@@ -238,35 +238,44 @@ else:
 
     
     # --- COLUMN 1: CSF SELECTION (Surgical Restoration) ---
+    # --- COLUMN 1: CSF SELECTION (Surgical Restoration) ---
     with col1:
         st.subheader("Critical Success Factors")
         
-        # 1. Fallback to a default if the session is fresh
+        # 1. Get the current category from state or default to Governance
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
         
-        # 2. Strict namespace search for the category
+        # 2. STRICT NAMESPACE FIND: This is the missing link
         category_node = root.find(f".//ans:Category[@id='{active_cat_id}']", ns)
         
         if category_node is not None:
+            # Loop through CSF children using the global namespace
             for csf in category_node.findall('ans:CSF', ns):
                 csf_id = csf.get('id')
                 csf_name = csf.get('name')
                 
-                # Logic for Success Ticks (Check MUST items)
+                # Tick Logic: Check if all 'Must' items for this CSF are validated
                 must_items = [i.text for i in csf.findall(".//ans:Item[@priority='Must']", ns)]
                 met_items = st.session_state.archived_status.get(csf_id, {})
                 is_complete = all(met_items.get(item) for item in must_items) if must_items else False
                 
+                # Apply tick icon if complete
                 display_label = f"{csf_name} ✅" if is_complete else csf_name
                 
-                # 3. Render the Button
-                if st.button(display_label, key=f"btn_nav_{csf_id}", use_container_width=True):
+                # 3. Render Buttons with unique keys
+                is_active = st.session_state.active_csf == csf_id
+                if st.button(
+                    display_label, 
+                    key=f"nav_btn_{csf_id}", 
+                    type="primary" if is_active else "secondary",
+                    use_container_width=True
+                ):
                     st.session_state.active_csf = csf_id
                     st.session_state.chat_history = []
                     st.rerun()
         else:
-            # This shows if the sidebar click didn't pass a valid ID
-            st.info("Select a Category in the sidebar to initialize factors.")
+            # This fallback confirms if the category search failed
+            st.info("Select a Category in the sidebar to load factors.")
 
     # COLUMN 2: The Validation Chat
     with col2:
