@@ -230,9 +230,11 @@ else:
     # --- COLUMN 1: CSF SELECTION WITH TICK LOGIC ---
     with col1:
         st.subheader("Critical Success Factors")
+        
+        # Ensure we have a default category if none is selected
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
         
-        # FIX: Added 'ans:' prefix and 'ns' to the category find call
+        # SURGICAL FIX: Use global ns to find the category node
         category_node = root.find(f".//ans:Category[@id='{active_cat_id}']", ns)
         
         if category_node is not None:
@@ -242,19 +244,21 @@ else:
                 csf_name = csf.get('name')
                 
                 # Logic to check if this CSF is "Complete" (All MUSTs met)
+                # Use ans:Item and ns to find the items within the CSF
                 must_items = [i.text for i in csf.findall(".//ans:Item[@priority='Must']", ns)]
                 met_items = st.session_state.archived_status.get(csf_id, {})
                 
+                # Check if every 'Must' item is True in our ledger
                 is_complete = all(met_items.get(item) for item in must_items) if must_items else False
                 
-                # Append tick icon to label if audit is successful
+                # Append tick icon to label if all must-haves are validated
                 display_label = f"{csf_name} ✅" if is_complete else csf_name
                 
                 # Render the high-contrast button
                 is_active = st.session_state.active_csf == csf_id
                 if st.button(
                     display_label, 
-                    key=f"btn_{csf_id}", 
+                    key=f"btn_v2_{csf_id}", # New key to avoid potential cache collision
                     type="primary" if is_active else "secondary",
                     use_container_width=True
                 ):
@@ -262,7 +266,7 @@ else:
                     st.session_state.chat_history = []
                     st.rerun()
         else:
-            st.info("Select a Category in the sidebar to load factors.")
+            st.info("Select a Category in the sidebar to initialize factors.")
 
     # COLUMN 2: The Validation Chat
     with col2:
