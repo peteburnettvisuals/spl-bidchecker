@@ -77,3 +77,32 @@ input {
     color: #000000 !important;
     background-color: #FFFFFF !important;
 }
+
+/* TARGET ALL BUTTONS (Sidebar, Auth, and Columns) */
+div.stButton > button, 
+div[data-testid="stForm"] button,
+.st-emotion-cache-19rxjzo { 
+    background-color: #FFFFFF !important; 
+    color: #000000 !important; /* Force Black Text */
+    border: 1px solid #FFFFFF !important;
+    font-weight: bold !important;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* HOVER EFFECT: Invert to "Gundogs Orange" for interaction feedback */
+div.stButton > button:hover {
+    background-color: #70e2ff !important;
+    color: #000000 !important;
+    border: 1px solid #70e2ff !important;
+    box-shadow: 0 0 15px #70e2ff;
+}
+
+/* FIX FOR TAB HEADERS (Register/Login) */
+button[data-baseweb="tab"] p {
+    color: #FFFFFF !important;
+}
+
+button[aria-selected="true"] {
+    border-bottom-color: #70e2ff !important;
+}
