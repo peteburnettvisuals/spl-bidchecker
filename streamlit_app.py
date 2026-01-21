@@ -7,6 +7,7 @@ import json
 from google.cloud import firestore
 from google.oauth2 import service_account
 import streamlit_authenticator as stauth
+import time
 
 def local_css(file_name):
     with open(file_name) as f:
@@ -112,16 +113,50 @@ if not st.session_state.get("authentication_status"):
         st.markdown("### SYSTEM ACCESS: BID READINESS C2")
         st.info("Public buyers will often exclude bidders at SQ stage if basics are not watertight. ")
     
-    with col_r:
-        auth_result = authenticator.login(location="main", key="spl_login")
-        if auth_result:
-            name, status, username = auth_result
-            if status:
-                st.session_state["authentication_status"] = True
-                st.session_state["username"] = username
-                st.rerun()
-            elif status == False:
-                st.error("Invalid Credentials. Access Denied.")
+    with col_r: # This is the right-hand column from your login screen
+        st.header("System Access")
+        tab_login, tab_register = st.tabs(["Resume Assessment", "Register New Account"])
+        
+        with tab_login:
+            # Standard login widget
+            auth_result = authenticator.login(location="main", key="spl_login_form")
+            if auth_result:
+                name, status, username = auth_result
+                if status:
+                    st.session_state["authentication_status"] = True
+                    st.session_state["username"] = username
+                    st.rerun()
+                elif status == False:
+                    st.error("Invalid Credentials. Check Your details.")
+
+        with tab_register:
+            st.subheader("New User Registration")
+            with st.form("registration_form"):
+                new_email = st.text_input("Corporate Email")
+                new_username = st.text_input("Requested Username")
+                new_name = st.text_input("Full Name")
+                new_password = st.text_input("Password", type="password")
+                
+                submit_reg = st.form_submit_button("Register")
+                
+                if submit_reg:
+                    if new_email and new_username and new_password:
+                        # 1. Hash the password for security
+                        hashed_password = stauth.Hasher([new_password]).generate()[0]
+                        
+                        # 2. Uplink to Firestore 'users' collection
+                        db.collection("users").document(new_email).set({
+                            "email": new_email,
+                            "username": new_username,
+                            "full_name": new_name,
+                            "password": hashed_password,
+                            "created_at": firestore.SERVER_TIMESTAMP,
+                            "role": "SME"
+                        })
+                        
+                        st.success(f"User {new_username} registered. Proceed to 'Resume' tab to login.")
+                        time.sleep(2)
+                        st.rerun()
 
 else:
 
