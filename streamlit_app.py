@@ -221,13 +221,15 @@ else:
         st.divider()
         st.subheader("📁 Categories")
         
-        # FIX: Use the 'ans:' prefix and pass the 'ns' dictionary
-        for cat in root.findall('ans:Category', ns):
+        # Use 'ans:' and 'ns' to ensure the categories are found
+        category_nodes = root.findall('ans:Category', ns)
+        
+        for cat in category_nodes:
             cat_name = cat.get('name')
             cat_id = cat.get('id')
             
-            # Now cat_name and cat_id are guaranteed to exist for the button
-            if st.button(cat_name, key=f"sidebar_cat_{cat_id}"):
+            # Defining variables inside a successful loop prevents the NameError
+            if st.button(cat_name, key=f"sidebar_nav_{cat_id}"):
                 st.session_state.active_cat = cat_id
                 st.rerun()
 
