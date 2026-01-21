@@ -75,7 +75,7 @@ div.stButton > button:hover {
 /* 9. INPUT FIELDS: BLACK TEXT ON WHITE */
 input {
     color: #000000 !important;
-    background-color: #FFFFFF !important;
+    background-color: #ccccff !important;
 }
 
 /* TARGET ALL BUTTONS (Sidebar, Auth, and Columns) */
@@ -100,7 +100,7 @@ div.stButton > button:hover {
 
 /* FIX FOR TAB HEADERS (Register/Login) */
 button[data-baseweb="tab"] p {
-    color: #000000 !important;
+    color: #ffffff !important;
 }
 
 button[aria-selected="true"] {
