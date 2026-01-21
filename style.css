@@ -75,7 +75,7 @@ div.stButton > button:hover {
 /* 9. INPUT FIELDS: BLACK TEXT ON WHITE */
 input {
     color: #000000 !important;
-    background-color: #ccccff !important;
+    background-color: #ffffff !important;
 }
 
 /* TARGET ALL BUTTONS (Sidebar, Auth, and Columns) */
@@ -105,4 +105,16 @@ button[data-baseweb="tab"] p {
 
 button[aria-selected="true"] {
     border-bottom-color: #70e2ff !important;
+}
+
+/* SURGICAL BUTTON TEXT RECOVERY */
+/* This targets only the text label inside Streamlit buttons to avoid icon artifacts */
+div.stButton button p {
+    color: #000000 !important; /* Force Black text on the white background */
+    font-weight: bold !important;
+}
+
+/* Ensure the Login button in the Auth widget also complies */
+.st-emotion-cache-19rxjzo p {
+    color: #000000 !important;
 }
