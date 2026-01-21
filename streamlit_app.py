@@ -227,17 +227,38 @@ else:
     # MAIN INTERFACE: 3 Columns
     col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
 
-    # COLUMN 1: CSF Selection
+    # --- COLUMN 1: CSF SELECTION WITH TICK LOGIC ---
     with col1:
         st.subheader("Critical Success Factors")
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
-        category_node = root.find(f".//Category[@id='{active_cat_id}']")
+        category_node = root.find(f".//ans:Category[@id='{active_cat_id}']", ns)
         
-        for csf in category_node.findall('CSF'):
-            is_active = st.session_state.active_csf == csf.get('id')
-            if st.button(csf.get('name'), key=csf.get('id'), type="primary" if is_active else "secondary"):
-                st.session_state.active_csf = csf.get('id')
-                st.session_state.chat_history = [] # Reset chat for new context
+        if category_node is not None:
+            for csf in category_node.findall('ans:CSF', ns):
+                csf_id = csf.get('id')
+                csf_name = csf.get('name')
+                
+                # 1. Logic to check if this CSF is "Complete"
+                # We check if all 'Must' items in the XML for this CSF are True in archived_status
+                must_items = [i.text for i in csf.findall(".//ans:Item[@priority='Must']", ns)]
+                met_items = st.session_state.archived_status.get(csf_id, {})
+                
+                is_complete = all(met_items.get(item) for item in must_items) if must_items else False
+                
+                # 2. Append tick icon if complete
+                display_label = f"{csf_name} ✅" if is_complete else csf_name
+                
+                # 3. Render the button
+                is_active = st.session_state.active_csf == csf_id
+                if st.button(
+                    display_label, 
+                    key=f"btn_{csf_id}", 
+                    type="primary" if is_active else "secondary",
+                    use_container_width=True
+                ):
+                    st.session_state.active_csf = csf_id
+                    st.session_state.chat_history = []
+                    st.rerun()
 
     # COLUMN 2: The Validation Chat
     with col2:
