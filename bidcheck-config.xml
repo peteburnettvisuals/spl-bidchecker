@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<UniversalAssessmentSchema xmlns="http://example.org/assessment">
-    
+<UniversalAssessmentSchema>    
     <Category name="Governance, Compliance &amp; Legal" id="CAT-GOV">
         
         <CSF id="CSF-GOV-01" name="Modern Slavery Statement">
