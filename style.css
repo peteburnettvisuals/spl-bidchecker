@@ -106,3 +106,24 @@ input {
     color: #000000 !important;
     background-color: #ffffff !important;
 }
+
+/* 8. AUTHENTICATOR LEGIBILITY PATCH */
+/* Forces text in the Auth widget buttons to be black, overriding global phosphor rules */
+[data-testid="stForm"] button p, 
+.st-emotion-cache-19rxjzo p, 
+.st-emotion-cache-12m0u9n p {
+    color: #000000 !important;
+    font-weight: 800 !important;
+}
+
+/* 9. TOAST MESSAGE RECOVERY */
+/* Ensures that success/error notifications are readable against the HUD backdrop */
+[data-testid="stToast"] {
+    background-color: #050505 !important;
+    border: 1px solid #70e2ff !important;
+}
+
+[data-testid="stToast"] p {
+    color: #70e2ff !important; /* Corporate Cyan text for high visibility */
+    font-weight: bold !important;
+}
