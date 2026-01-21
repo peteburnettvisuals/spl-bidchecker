@@ -96,6 +96,29 @@ if "authenticator" not in st.session_state:
 
 authenticator = st.session_state.authenticator
 
+def calculate_live_score(root, archived_status):
+    total_weighted = 0
+    ns = {'ans': 'http://example.org/assessment'}
+    
+    for category in root.findall('ans:Category', ns):
+        for csf in category.findall('ans:CSF', ns):
+            csf_id = csf.get('id')
+            multiplier = float(csf.find('.//ans:Multiplier', ns).text)
+            
+            # Get all criteria for this factor
+            criteria_items = [i.text for i in csf.findall(".//ans:Item", ns)]
+            if not criteria_items:
+                continue
+                
+            # Count validated items for this CSF
+            user_met_dict = archived_status.get(csf_id, {})
+            met_count = sum(1 for item in criteria_items if user_met_dict.get(item))
+            
+            # Apply weighted logic: (Completed / Total) * Multiplier
+            total_weighted += (met_count / len(criteria_items)) * multiplier
+                
+    return int(total_weighted)
+
 
 # --- 5. UI LAYOUT (3-COLUMN SKETCH) ---
 st.set_page_config(layout="wide", page_title="SPL Bid Readiness")
@@ -175,9 +198,8 @@ else:
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
         st.header("🦅 TOTAL READINESS")
-        # Simple score math for the demo
-        total_score = sum([1 for csf in st.session_state.archived_status if any(st.session_state.archived_status[csf].values())])
-        st.metric("WEIGHTED SCORE", f"{total_score * 100}") # Placeholder for multiplier logic
+        live_score = calculate_live_score(root, st.session_state.archived_status)
+        st.metric("WEIGHTED SCORE", f"{live_score} PTS")
         
         st.divider()
         st.subheader("📁 Categories")
