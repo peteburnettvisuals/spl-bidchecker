@@ -303,34 +303,34 @@ else:
             st.rerun()
 
     # --- COLUMN 3: MoSCoW STATUS BOXES ---
-with col3:
-    st.subheader("Requirement Checklist")
-    
-    # 1. Fetch the items using the global namespace
-    criteria_nodes = active_csf_node.findall(".//ans:Item", ns)
-    
-    for item_node in criteria_nodes:
-        text = item_node.text
-        priority = item_node.get("priority") # 'Must' or 'Should'
+    with col3:
+        st.subheader("Requirement Checklist")
         
-        # 2. Check the ledger to see if this specific item is met
-        is_met = st.session_state.archived_status.get(st.session_state.active_csf, {}).get(text, False)
+        # 1. Fetch the items using the global namespace
+        criteria_nodes = active_csf_node.findall(".//ans:Item", ns)
         
-        # 3. Dynamic Color Logic
-        if is_met:
-            bg_color = "#28a745"  # Validated Green
-            status_label = "VALIDATED"
-        elif priority == "Must":
-            bg_color = "#dc3545"  # High-Risk Red
-            status_label = "MUST"
-        else:
-            bg_color = "#ffc107"  # Warning Amber
-            status_label = "SHOULD"
+        for item_node in criteria_nodes:
+            text = item_node.text
+            priority = item_node.get("priority") # 'Must' or 'Should'
             
-        # 4. Render high-contrast Phosphor box
-        st.markdown(f"""
-            <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin-bottom:10px; color:white;">
-                <small style="font-weight:bold; opacity:0.8;">[{status_label}]</small><br>
-                <span style="font-weight:bold; font-size:1.1rem;">{text}</span>
-            </div>
-        """, unsafe_allow_html=True)
+            # 2. Check the ledger to see if this specific item is met
+            is_met = st.session_state.archived_status.get(st.session_state.active_csf, {}).get(text, False)
+            
+            # 3. Dynamic Color Logic
+            if is_met:
+                bg_color = "#28a745"  # Validated Green
+                status_label = "VALIDATED"
+            elif priority == "Must":
+                bg_color = "#dc3545"  # High-Risk Red
+                status_label = "MUST"
+            else:
+                bg_color = "#ffc107"  # Warning Amber
+                status_label = "SHOULD"
+                
+            # 4. Render high-contrast Phosphor box
+            st.markdown(f"""
+                <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin-bottom:10px; color:white;">
+                    <small style="font-weight:bold; opacity:0.8;">[{status_label}]</small><br>
+                    <span style="font-weight:bold; font-size:1.1rem;">{text}</span>
+                </div>
+            """, unsafe_allow_html=True)
