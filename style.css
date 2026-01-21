@@ -1,5 +1,5 @@
 /* ==========================================
-   SPL BID READINESS C2: WHITE PHOSPHOR HUD
+   SPL BID READINESS C2: REFINED HUD
    ========================================== */
 
 /* 1. GLOBAL UI & BACKGROUND */
@@ -12,34 +12,28 @@
     font-family: 'Courier New', Courier, monospace;
 }
 
-/* 2. SIDEBAR: DEEP NAVY/BLACK BASE */
+/* 2. SIDEBAR & METRICS */
 [data-testid="stSidebar"] {
     background-color: rgba(2, 5, 10, 0.95) !important;
     border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
-/* 3. WHITE PHOSPHOR GLOW FOR HEADERS */
 h1, h2, h3, .stMetric, p, span, label {
-    color: #F0F8FF !important; /* Alice Blue / White Phosphor */
+    color: #F0F8FF !important; 
     text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
 }
 
-/* 4. METRICS: KEEP SAFETY ORANGE FOR URGENCY */
 [data-testid="stMetricValue"] {
     color: #FF8C00 !important; 
     text-shadow: 0 0 12px #FF8C00;
 }
 
-/* 5. TRANSPARENCY PATCH (The "Curtain Killer") */
-[data-testid="stAppViewContainer"],
-.main,
-.block-container,
-[data-testid="stVerticalBlock"], 
-[data-testid="stChatMessageContainer"] {
+/* 3. TRANSPARENCY & CHAT BUBBLES */
+[data-testid="stAppViewContainer"], .main, .block-container, 
+[data-testid="stVerticalBlock"], [data-testid="stChatMessageContainer"] {
     background-color: transparent !important;
 }
 
-/* 6. THREE-COLUMN THEATER: CHAT BUBBLES */
 [data-testid="stChatMessage"] {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -47,7 +41,7 @@ h1, h2, h3, .stMetric, p, span, label {
     backdrop-filter: blur(4px);
 }
 
-/* 7. THE AMBER COMMAND CAPSULE (Col 2 Input) */
+/* 4. COMMAND INPUT (AMBER) */
 [data-testid="stChatInputContainer"] {
     background-color: #000000 !important; 
     border: 1px solid #FF8C00 !important; 
@@ -55,87 +49,55 @@ h1, h2, h3, .stMetric, p, span, label {
     box-shadow: 0 0 10px rgba(255, 140, 0, 0.3);
 }
 
-/* 8. TACTICAL BUTTONS: HIGH CONTRAST */
-div.stButton > button, div[data-testid="stForm"] button {
-    background-color: #FFFFFF !important; 
-    color: #000000 !important;
-    border-radius: 2px !important;
-    border: none !important;
-    font-weight: bold !important;
-    text-transform: uppercase;
-    transition: 0.2s ease;
-    box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.4);
-}
-
-div.stButton > button:hover {
-    background-color: #E0E0E0 !important;
-    box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.8);
-}
-
-/* 9. INPUT FIELDS: BLACK TEXT ON WHITE */
-input {
-    color: #000000 !important;
-    background-color: #ffffff !important;
-}
-
-/* TARGET ALL BUTTONS (Sidebar, Auth, and Columns) */
+/* 5. UNIFIED BUTTONS (UI, FORM, & AUTH) */
+/* Consolidation to prevent white-on-white text issues */
 div.stButton > button, 
 div[data-testid="stForm"] button,
-.st-emotion-cache-19rxjzo { 
-    background-color: #FFFFFF !important; 
-    color: #000000 !important; /* Force Black Text */
-    border: 1px solid #FFFFFF !important;
-    font-weight: bold !important;
-    text-transform: uppercase;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-}
-
-/* HOVER EFFECT: Invert to "Gundogs Orange" for interaction feedback */
-div.stButton > button:hover {
-    background-color: #70e2ff !important;
-    color: #000000 !important;
-    border: 1px solid #70e2ff !important;
-    box-shadow: 0 0 15px #70e2ff;
-}
-
-/* FIX FOR TAB HEADERS (Register/Login) */
-button[data-baseweb="tab"] p {
-    color: #ffffff !important;
-}
-
-button[aria-selected="true"] {
-    border-bottom-color: #70e2ff !important;
-}
-
-/* SURGICAL BUTTON TEXT RECOVERY */
-/* This targets only the text label inside Streamlit buttons to avoid icon artifacts */
-div.stButton button p {
-    color: #000000 !important; /* Force Black text on the white background */
-    font-weight: bold !important;
-}
-
-/* Ensure the Login button in the Auth widget also complies */
-.st-emotion-cache-19rxjzo p {
-    color: #000000 !important;
-}
-
-/* TARGET AUTHENTICATOR WIDGET BUTTONS */
-/* This forces the Login/Register buttons to match your UI buttons */
-div[data-testid="stForm"] button, 
 .st-emotion-cache-19rxjzo,
 div[data-testid="stSidebar"] button {
-    background-color: #FFFFFF !important;
-    color: #000000 !important; /* Force Black Text */
+    background-color: #FFFFFF !important; 
+    color: #000000 !important; /* High contrast black text */
     border: 1px solid #70e2ff !important;
-    font-weight: bold !important;
+    border-radius: 2px !important;
+    font-weight: 800 !important;
     text-transform: uppercase;
+    transition: 0.3s ease;
     box-shadow: 0 0 10px rgba(112, 226, 255, 0.3);
 }
 
-/* AUTH BUTTON HOVER: Corporate Cyan Glow */
+/* Unified Hover: Corporate Cyan Glow */
+div.stButton > button:hover, 
 div[data-testid="stForm"] button:hover,
 .st-emotion-cache-19rxjzo:hover {
     background-color: #70e2ff !important;
     color: #000000 !important;
-    box-shadow: 0 0 15px #70e2ff;
+    box-shadow: 0 0 20px #70e2ff;
+}
+
+/* Target specific paragraph tags inside buttons to force visibility */
+div.stButton button p, .st-emotion-cache-19rxjzo p {
+    color: #000000 !important;
+    margin-bottom: 0px !important;
+}
+
+/* 6. TAB HEADERS (Corporate Branding) */
+button[data-baseweb="tab"] p {
+    color: #FFFFFF !important;
+    font-weight: bold !important;
+}
+
+button[aria-selected="true"] {
+    border-bottom-color: #70e2ff !important;
+    background-color: rgba(112, 226, 255, 0.1) !important;
+}
+
+button[aria-selected="true"] p {
+    color: #70e2ff !important;
+    text-shadow: 0 0 5px #70e2ff;
+}
+
+/* 7. FORM INPUTS */
+input {
+    color: #000000 !important;
+    background-color: #ffffff !important;
 }
