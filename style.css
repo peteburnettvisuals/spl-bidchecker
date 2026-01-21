@@ -50,13 +50,13 @@ h1, h2, h3, .stMetric, p, span, label {
 }
 
 /* 5. UNIFIED BUTTONS (UI, FORM, & AUTH) */
-/* Consolidation to prevent white-on-white text issues */
+/* Targets all buttons to ensure high-visibility black text */
 div.stButton > button, 
 div[data-testid="stForm"] button,
 .st-emotion-cache-19rxjzo,
 div[data-testid="stSidebar"] button {
     background-color: #FFFFFF !important; 
-    color: #000000 !important; /* High contrast black text */
+    color: #000000 !important; 
     border: 1px solid #70e2ff !important;
     border-radius: 2px !important;
     font-weight: 800 !important;
@@ -65,7 +65,7 @@ div[data-testid="stSidebar"] button {
     box-shadow: 0 0 10px rgba(112, 226, 255, 0.3);
 }
 
-/* Unified Hover: Corporate Cyan Glow */
+/* Corporate Cyan Hover for Interactive Feedback */
 div.stButton > button:hover, 
 div[data-testid="stForm"] button:hover,
 .st-emotion-cache-19rxjzo:hover {
@@ -74,13 +74,18 @@ div[data-testid="stForm"] button:hover,
     box-shadow: 0 0 20px #70e2ff;
 }
 
-/* Target specific paragraph tags inside buttons to force visibility */
+/* Force paragraph text inside buttons to remain black */
 div.stButton button p, .st-emotion-cache-19rxjzo p {
     color: #000000 !important;
     margin-bottom: 0px !important;
+    font-weight: 800 !important;
 }
 
 /* 6. TAB HEADERS (Corporate Branding) */
+button[data-baseweb="tab"] {
+    border-bottom-width: 2px !important;
+}
+
 button[data-baseweb="tab"] p {
     color: #FFFFFF !important;
     font-weight: bold !important;
