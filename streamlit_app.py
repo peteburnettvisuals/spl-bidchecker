@@ -231,24 +231,26 @@ else:
     with col1:
         st.subheader("Critical Success Factors")
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
+        
+        # FIX: Added 'ans:' prefix and 'ns' to the category find call
         category_node = root.find(f".//ans:Category[@id='{active_cat_id}']", ns)
         
         if category_node is not None:
+            # Loop through CSF children using the global namespace
             for csf in category_node.findall('ans:CSF', ns):
                 csf_id = csf.get('id')
                 csf_name = csf.get('name')
                 
-                # 1. Logic to check if this CSF is "Complete"
-                # We check if all 'Must' items in the XML for this CSF are True in archived_status
+                # Logic to check if this CSF is "Complete" (All MUSTs met)
                 must_items = [i.text for i in csf.findall(".//ans:Item[@priority='Must']", ns)]
                 met_items = st.session_state.archived_status.get(csf_id, {})
                 
                 is_complete = all(met_items.get(item) for item in must_items) if must_items else False
                 
-                # 2. Append tick icon if complete
+                # Append tick icon to label if audit is successful
                 display_label = f"{csf_name} ✅" if is_complete else csf_name
                 
-                # 3. Render the button
+                # Render the high-contrast button
                 is_active = st.session_state.active_csf == csf_id
                 if st.button(
                     display_label, 
@@ -259,6 +261,8 @@ else:
                     st.session_state.active_csf = csf_id
                     st.session_state.chat_history = []
                     st.rerun()
+        else:
+            st.info("Select a Category in the sidebar to load factors.")
 
     # COLUMN 2: The Validation Chat
     with col2:
