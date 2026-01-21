@@ -220,15 +220,16 @@ else:
         
         st.divider()
         st.subheader("📁 Categories")
-        # Use the namespace to find all categories
+        
+        # FIX: Use the 'ans:' prefix and pass the 'ns' dictionary
         for cat in root.findall('ans:Category', ns):
             cat_name = cat.get('name')
             cat_id = cat.get('id')
-        
-        # When clicked, update the session state and rerun
-        if st.button(cat_name, key=f"cat_{cat_id}"):
-            st.session_state.active_cat = cat_id
-            st.rerun()
+            
+            # Now cat_name and cat_id are guaranteed to exist for the button
+            if st.button(cat_name, key=f"sidebar_cat_{cat_id}"):
+                st.session_state.active_cat = cat_id
+                st.rerun()
 
     # MAIN INTERFACE: 3 Columns
     col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
