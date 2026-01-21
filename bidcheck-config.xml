@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UniversalAssessmentSchema xmlns="http://example.org/assessment">
+    
+    <Category name="Governance, Compliance &amp; Legal" id="CAT-GOV">
+        
+        <CSF id="CSF-GOV-01" name="Modern Slavery Statement">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>1</Max>
+                <Multiplier>1000</Multiplier> 
+                <Type>Binary</Type>
+                <Criteria>
+                    <Item priority="Must">Must be signed and dated</Item>
+                    <Item priority="Must">Must not be an internet copy referencing irrelevant legislation</Item>
+                    <Item priority="Must">Must comply with procurement body legislation</Item>
+                </Criteria>
+            </CanonicalAttributes>
+        </CSF>
+
+        <CSF id="CSF-GOV-02" name="Policy Consistency &amp; Readiness">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>10</Max>
+                <Multiplier>50</Multiplier>
+                <Type>Proportional</Type>
+                <Criteria>
+                    <Item priority="Must">- Policies must able to to be produced and supplied within 24 hours</Item>
+                    <Item priority="Must">- Policies must not contain contradictions as a group (ie Policy A says something different to policy B)</Item>
+                    <Item priority="Must">- Must not be an internet copy referencing irrelevant legislation</Item>
+                    <Item priority="Must">- Must comply with procurement body legislation</Item>
+                </Criteria>
+            </CanonicalAttributes>
+            <SpecificAttributes>
+                <Test>Can you provide 10 policies within 24 hours? [cite: 14]</Test>
+            </SpecificAttributes>
+        </CSF>
+    </Category>
+
+    <Category name="Social Value &amp; Local Impact" id="CAT-SOC">
+        
+        <CSF id="CSF-SOC-01" name="Social Value Strategy">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>100</Max>
+                <Multiplier>2.0</Multiplier>
+                <Type>Proportional</Type>
+                <Criteria>
+                    <Item priority="Must">- Must Measurable commitments, not aspirations</Item>
+                    <Item priority="Must">- Must comply with procurement body legislation</Item>
+                    <Item priority="Should">- Include reference to the creation of local jobs and apprenticeships</Item>
+                    <Item priority="Should">- Include reference fuel poverty support</Item>
+                </Criteria>
+            </CanonicalAttributes>
+        </CSF>
+
+        <CSF id="CSF-SOC-02" name="Case Study &amp; KPI Evidence">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>5</Max>
+                <Multiplier>100</Multiplier>
+                <Type>Proportional</Type>
+                <Criteria>
+                    <Item priority="Must">Include Retrofit-relevant outcomes</Item>
+                    <Item priority="Should">Include client references (ideally public sector)</Item>
+                </Criteria>
+            </CanonicalAttributes>
+        </CSF>
+    </Category>
+</UniversalAssessmentSchema>
