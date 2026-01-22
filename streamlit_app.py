@@ -364,17 +364,29 @@ else:
             st.session_state.chat_history.append({"role": "model", "content": clean_resp})
             st.rerun()
 
-    # COLUMN 3: MoSCoW Status Boxes
+    # --- COLUMN 3: STABILIZED CHECKLIST ---
     with col3:
         st.subheader("Requirement Checklist")
         criteria_nodes = active_csf_node.findall(".//Item")
         
+        # Check if the ENTIRE CSF is already validated (True)
+        csf_validated_globally = st.session_state.archived_status.get(st.session_state.active_csf) == True
+        
         for item_node in criteria_nodes:
             text = item_node.text
             priority = item_node.get("priority")
-            is_met = st.session_state.archived_status.get(st.session_state.active_csf, {}).get(text, False)
             
-            # Color coding based on your sketch
+            # FIX: Ensure we don't call .get() on a boolean 'True'
+            csf_entry = st.session_state.archived_status.get(st.session_state.active_csf, {})
+            
+            if csf_validated_globally:
+                is_met = True
+            elif isinstance(csf_entry, dict):
+                is_met = csf_entry.get(text, False)
+            else:
+                is_met = False
+                
+            # Color coding logic remains the same
             bg_color = "#28a745" if is_met else ("#dc3545" if priority == "Must" else "#ffc107")
             st.markdown(f"""
                 <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin-bottom:10px; color:white; font-weight:bold;">
