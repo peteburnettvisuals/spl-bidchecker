@@ -5,7 +5,7 @@
         <CSF id="CSF-GOV-01" name="Modern Slavery Statement">
             <CanonicalAttributes>
                 <Min>0</Min>
-                <Max>1</Max>
+                <Max>100</Max>
                 <Multiplier>1000</Multiplier> 
                 <Type>Binary</Type>
                 <Criteria>
@@ -19,7 +19,7 @@
         <CSF id="CSF-GOV-02" name="Policy Consistency &amp; Readiness">
             <CanonicalAttributes>
                 <Min>0</Min>
-                <Max>10</Max>
+                <Max>100</Max>
                 <Multiplier>50</Multiplier>
                 <Type>Proportional</Type>
                 <Criteria>
@@ -27,6 +27,35 @@
                     <Item priority="Must">Policies must not contain contradictions as a group (ie Policy A says something different to policy B)</Item>
                     <Item priority="Must">Must not be an internet copy referencing irrelevant legislation</Item>
                     <Item priority="Must">Must comply with procurement body legislation</Item>
+                </Criteria>
+            </CanonicalAttributes>
+        </CSF>
+    </Category>
+
+    <Category name="Financial Readiness &amp; Transparency" id="CAT-FIN">
+        
+        <CSF id="CSF-FIN-01" name="2-3 Years Filed Accounts">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>100</Max>
+                <Multiplier>1</Multiplier> 
+                <Type>Binary</Type>
+                <Criteria>
+                    <Item priority="Must">Must be signed and dated</Item>
+                    <Item priority="Must">Must be compiled by certified accountant</Item>
+                    <Item priority="Must">Must comply with procurement body legislation</Item>
+                </Criteria>
+            </CanonicalAttributes>
+        </CSF>
+
+        <CSF id="CSF-FIN-02" name="Turnover Threshold">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>100</Max>
+                <Multiplier>1</Multiplier>
+                <Type>Binary</Type>
+                <Criteria>
+                    <Item priority="Must">Turnover must be 1.5x to 2x the bid contract value </Item>
                 </Criteria>
             </CanonicalAttributes>
             <SpecificAttributes>
