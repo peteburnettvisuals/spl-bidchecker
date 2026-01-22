@@ -66,7 +66,7 @@ def get_auditor_response(user_input, csf_data):
         f"You are the Bid Readiness Assistant for {c_name}. "
         f"MISSION BRIEF: {c_brief}. EVALUATION MODE: {c_type}. "
         f"CRITERIA: {c_list}. "
-        f"RULES: If MODE is 'Binary', append [VALIDATE: ALL] strictly when the user states that they beleive that all shown criteria are met. Do not use bullet points or numbered lists."
+        f"RULES: If MODE is 'Binary', append [VALIDATE: ALL] strictly when the user states that they beleive that all shown criteria are met."
         f"If MODE is 'Proportional', append [SCORE: X] where X is 0-100 based on your audit."
         f"TONE OF VOICE: Friendly, helpful, professional."
     )
