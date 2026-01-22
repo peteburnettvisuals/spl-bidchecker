@@ -259,9 +259,21 @@ if not st.session_state.get("authentication_status"):
                             "created_at": firestore.SERVER_TIMESTAMP,
                         })
                         
-                        st.success(f"Company {new_company} registered. Use your email to login.")
-                        time.sleep(2)
-                        st.rerun()
+                        # 2. THE JUMP: Manually authenticate and hydrate the session
+                        st.session_state["authentication_status"] = True
+                        st.session_state["username"] = new_email
+                        st.session_state["name"] = new_name
+                        st.session_state["company"] = new_company
+                        
+                        # 3. INITIALIZE: Ensure they start with a clean slate for the first audit
+                        st.session_state.all_histories = {}
+                        st.session_state.csf_scores = {}
+                        st.session_state.archived_status = {}
+                        st.session_state.active_csf = "CSF-GOV-01" # Start at the beginning
+                        
+                        st.success(f"Welcome {new_name}! System initialized for {new_company}.")
+                        time.sleep(1.5)
+                        st.rerun() # This skips the login screen and goes straight to Assess UI
                     else:
                         st.warning("Please fill in all mandatory fields.")
 
