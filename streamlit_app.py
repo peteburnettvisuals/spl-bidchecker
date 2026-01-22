@@ -51,41 +51,35 @@ def get_auditor_response(user_input, csf_data):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     
-    # 1. Ensure all context data are clean strings
-    c_name = str(csf_data.get('name', 'Unknown'))
-    c_id = str(csf_data.get('id', 'Unknown'))
-    c_brief = str(csf_data.get('context_brief', 'No context provided.'))
+    # Clean the data strings
+    c_name = str(csf_data.get('name', 'Audit Item'))
+    c_id = str(csf_data.get('id', 'N/A'))
+    c_brief = str(csf_data.get('context_brief', 'No context.'))
     c_type = str(csf_data.get('type', 'Proportional'))
-    c_list = "\n".join([f"- {item}" for item in csf_data.get('criteria', [])])
+    c_list = ", ".join(csf_data.get('criteria', []))
 
-    # 2. Build the Core Instruction
-    # If system_instruction parameter fails, we'll bake it into the prompt for the handshake
-    core_logic = (
-        f"You are the SPL Lead Auditor auditing {c_name} (ID: {c_id}).\n"
-        f"MISSION: {c_brief}\n"
-        f"EVALUATION MODE: {c_type}\n\n"
-        f"CRITERIA:\n{c_list}\n\n"
-        f"OUTPUT RULES:\n"
-        f"- For Binary: append [VALIDATE: ALL] if passed.\n"
-        f"- For Proportional: append [SCORE: X] where X is 0-100.\n"
+    # Build the rules as a simple string
+    base_prompt = (
+        f"Act as the SPL Lead Auditor for {c_name} ({c_id}). "
+        f"Context: {c_brief}. Mode: {c_type}. Criteria: {c_list}. "
+        f"Rules: If Binary, append [VALIDATE: ALL] for pass. "
+        f"If Proportional, append [SCORE: X] (0-100)."
     )
 
-    # Use the most stable model name
-    model = genai.GenerativeModel(model_name='gemini-1.5-flash') 
+    # Initialize model WITHOUT system_instruction parameter
+    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
     
     if user_input == "INITIATE_HANDSHAKE":
-        # Combine instructions and prompt for a one-shot stable start
-        full_handshake_prompt = f"{core_logic}\n\nUSER REQUEST: Please introduce yourself and give me the Mission Brief."
-        response = model.generate_content(full_handshake_prompt)
+        # Combine instructions and request into one string
+        full_call = f"{base_prompt} USER: Please introduce yourself and give me the Mission Brief."
+        response = model.generate_content(full_call)
     else:
-        # Standard chat logic
-        # REPAIR: Ensure history is None if empty to satisfy SDK
+        # For standard chat, ensure history is None if empty
         history = st.session_state.chat_history if len(st.session_state.chat_history) > 0 else None
         
-        # Initialize model with system_instruction ONLY for follow-ups
-        chat_model = genai.GenerativeModel(model_name='gemini-1.5-flash', system_instruction=core_logic)
-        chat = chat_model.start_chat(history=history)
-        response = chat.send_message(user_input)
+        # We add the instructions to the user input for every follow-up turn
+        chat = model.start_chat(history=history)
+        response = chat.send_message(f"Audit Rules: {base_prompt}\n\nUser Evidence: {user_input}")
         
     return response.text
 
