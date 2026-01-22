@@ -8,6 +8,7 @@ from google.cloud import firestore
 from google.oauth2 import service_account
 import streamlit_authenticator as stauth
 import time
+from streamlit_echarts import st_echarts
 
 def local_css(file_name):
     with open(file_name) as f:
@@ -230,16 +231,53 @@ else:
     with st.sidebar:
         st.header("🦅 TOTAL READINESS")
         
+        # Calculate Max & Live Scores (Your existing logic)
+        max_score = sum(int(csf.find('CanonicalAttributes/Multiplier').text) * 100 
+                        for csf in root.findall('.//CSF'))
+        live_score = calculate_live_score(root, st.session_state.archived_status, st.session_state.get("csf_scores", {}))
+        
+        # Calculate Percentage for the needle
+        readiness_pct = round((live_score / max_score) * 100, 1) if max_score > 0 else 0
+
+        # ECharts Gauge Configuration
+        option = {
+            "series": [
+                {
+                    "type": "gauge",
+                    "startAngle": 180,
+                    "endAngle": 0,
+                    "min": 0,
+                    "max": 100,
+                    "splitNumber": 5,
+                    "itemStyle": {"color": "#00ffcc", "shadowColor": "rgba(0, 255, 204, 0.45)", "shadowBlur": 10},
+                    "progress": {"show": True, "roundCap": True, "width": 18},
+                    "pointer": {"icon": "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z", "length": "12%", "width": 20, "offsetCenter": [0, "-55%"], "itemStyle": {"color": "auto"}},
+                    "axisLine": {"roundCap": True, "lineStyle": {"width": 18, "color": [[1, "#111111"]]}},
+                    "axisTick": {"show": False},
+                    "splitLine": {"show": False},
+                    "axisLabel": {"show": False},
+                    "title": {"show": False},
+                    "detail": {
+                        "offsetCenter": [0, "20%"],
+                        "valueAnimation": True,
+                        "formatter": "{value}%",
+                        "color": "#ffffff",
+                        "fontSize": 30,
+                    },
+                    "data": [{"value": readiness_pct}],
+                }
+            ]
+        }
+
+        # Render the Gauge (Height adjusted for the semi-circle)
+        st_echarts(options=option, height="250px")
+        
+        st.markdown(f"<p style='text-align: center; color: #888;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
+        
         # Fetch data from session state
         archived = st.session_state.get("archived_status", {})
-        scores = st.session_state.get("csf_scores", {})
         
-        # Calculate global weighted score
-        live_score = calculate_live_score(root, archived, scores)
-        
-        # Display the score prominently
-        st.metric("WEIGHTED READINESS", f"{live_score} PTS")
-        
+               
         st.divider()
         st.subheader("📁 Categories")
         for cat in root.findall('Category'):
