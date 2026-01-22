@@ -47,37 +47,39 @@ if "archived_status" not in st.session_state:
 
 # --- 4. THE AI AUDITOR ENGINE ---
 def get_auditor_response(user_input, csf_data):
-    """
-    csf_data contains: 'id', 'name', 'type', 'context_brief', 'criteria'
-    """
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.0-flash')
     
-    criteria_str = "\n".join([f"- {c}" for c in csf_data['criteria']])
-    
-    # MISSION BRIEF: Uses the new <Context> field for the handshake
+    # MISSION BRIEF: Defined at the model level for stability
     sys_instr = f"""
     ROLE: SPL Lead Auditor.
-    CSF: {csf_data['name']}.
+    CSF: {csf_data['name']} (ID: {csf_data['id']}).
     MISSION BRIEF: {csf_data['context_brief']}
+    MODE: {csf_data['type']}
     
-    IF the user says 'INITIATE_HANDSHAKE':
-    - Do NOT ask for evidence yet.
-    - Conduct a professional handshake.
-    - Explain the MISSION BRIEF (the 'Why' behind this requirement).
-    - End by asking if they believe they currently meet the criteria.
+    CRITERIA: 
+    {chr(10).join([f"- {c}" for c in csf_data['criteria']])}
+    
+    IF user says 'INITIATE_HANDSHAKE':
+    - Do NOT ask for evidence. Conduct a handshake explaining the 'Why'.
+    - End by asking if they believe they meet the criteria.
     
     OTHERWISE:
-    1. THE AUDIT: Ask if user believes they meet these criteria. 
-    2. THE PAYLOAD: 
-       - If MODE is 'Binary': Append [VALIDATE: ALL] only if they fully comply.
-       - If MODE is 'Proportional': Append [SCORE: X] where X is a value from 0-100 based on evidence.
-    3. Maintain a forensic yet helpful partner tone.
+    - If Binary: Append [VALIDATE: ALL] only if fully compliant.
+    - If Proportional: Append [SCORE: X] (0-100).
     """
+
+    model = genai.GenerativeModel(
+        model_name='gemini-2.0-flash',
+        system_instruction=sys_instr
+    )
     
-    chat = model.start_chat(history=st.session_state.chat_history)
-    response = chat.send_message(f"{sys_instr}\n\nUser Evidence: {user_input}")
+    # CRITICAL: If handshake, we MUST start with empty history []
+    # Gemini throws InvalidArgument if history exists but prompt is a system restart
+    history = [] if user_input == "INITIATE_HANDSHAKE" else st.session_state.chat_history
+    
+    chat = model.start_chat(history=history)
+    response = chat.send_message(user_input)
     return response.text
 
 def calculate_live_score(root, archived_status, csf_scores):
@@ -283,9 +285,9 @@ else:
         active_csf_node = root.find(f".//CSF[@id='{st.session_state.active_csf}']")
         attribs = active_csf_node.find('CanonicalAttributes')
         
-        # 1. HANDSHAKE GATE: If true, execute AI call and STOP (rerun)
+        # Standard Handshake Trigger (Same as before, but with 'model' role fix)
         if st.session_state.get("needs_handshake", False):
-            with st.spinner("Lead Auditor initiating handshake..."):
+            with st.spinner("Lead Auditor entering..."):
                 handshake_data = {
                     'id': st.session_state.active_csf,
                     'name': active_csf_node.get('name'),
@@ -297,20 +299,24 @@ else:
                 response = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
                 clean_resp = re.sub(r"\[.*?\]", "", response).strip()
                 
-                st.session_state.chat_history = [{"role": "assistant", "content": clean_resp}]
-                st.session_state.needs_handshake = False 
-                st.rerun()  # This ensures Column 2 clears and moves to standard display
+                # THE FIX: Role must be 'model', not 'assistant'
+                st.session_state.chat_history = [{"role": "model", "content": clean_resp}]
+                st.session_state.needs_handshake = False
+                st.rerun()
 
         # 2. STANDARD DISPLAY: Only reached if handshake is False
         st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
-        
+
         chat_container = st.container(height=500)
         for msg in st.session_state.chat_history:
-            with chat_container.chat_message(msg["role"]):
+            # MAP THE ROLE: Gemini uses 'model', but Streamlit UI likes 'assistant'
+            ui_role = "assistant" if msg["role"] == "model" else "user"
+            
+            with chat_container.chat_message(ui_role):
                 st.write(msg["content"])
                 
-        if user_input := st.chat_input("Provide evidence..."):
-            # REPAIR: Define csf_context here for the standard interaction
+        if user_input := st.chat_input("Your response ..."):
+            # We re-package the context for the evaluation turn
             csf_context = {
                 'id': st.session_state.active_csf,
                 'name': active_csf_node.get('name'),
@@ -322,20 +328,16 @@ else:
             st.session_state.chat_history.append({"role": "user", "content": user_input})
             response = get_auditor_response(user_input, csf_context)
             
-            # --- REGEX INGESTION ENGINE ---
-            if "[VALIDATE: ALL]" in response:
-                st.session_state.archived_status[st.session_state.active_csf] = True
-                st.toast(f"✅ {csf_context['name']} Validated")
-
+            # UI Logic: Apply score to the current active CSF
             score_match = re.search(r"\[SCORE: (\d+)\]", response)
             if score_match:
                 val = int(score_match.group(1))
+                # The UI knows which one to update via st.session_state.active_csf
                 if "csf_scores" not in st.session_state: st.session_state.csf_scores = {}
                 st.session_state.csf_scores[st.session_state.active_csf] = val
-                st.toast(f"📊 Readiness Updated: {val}%")
-
+                
             clean_resp = re.sub(r"\[.*?\]", "", response).strip()
-            st.session_state.chat_history.append({"role": "assistant", "content": clean_resp})
+            st.session_state.chat_history.append({"role": "model", "content": clean_resp})
             st.rerun()
 
     # COLUMN 3: MoSCoW Status Boxes
