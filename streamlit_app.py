@@ -38,6 +38,7 @@ def load_universal_schema(file_path):
 # --- 3. SESSION STATE INITIALIZATION ---
 if "active_csf" not in st.session_state:
     st.session_state.active_csf = "CSF-GOV-01"
+    st.session_state.needs_handshake = True  # NEW: Trigger first handshake on load
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "archived_status" not in st.session_state:
@@ -277,12 +278,12 @@ else:
                     st.session_state.needs_handshake = True 
                     st.rerun()
 
-    # --- COLUMN 2: THE AUDIT CHAT ---
+    # --- COLUMN 2: THE AUDIT CHAT (Surgical Fix) ---
     with col2:
         active_csf_node = root.find(f".//CSF[@id='{st.session_state.active_csf}']")
         attribs = active_csf_node.find('CanonicalAttributes')
         
-        # Check if we need to initiate the first contact
+        # 1. HANDSHAKE GATE: If true, execute AI call and STOP (rerun)
         if st.session_state.get("needs_handshake", False):
             with st.spinner("Lead Auditor initiating handshake..."):
                 handshake_data = {
@@ -293,50 +294,49 @@ else:
                     'criteria': [i.text for i in attribs.find('Criteria').findall('Item')]
                 }
                 
-                # This call now happens in the correct flow
                 response = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
                 clean_resp = re.sub(r"\[.*?\]", "", response).strip()
                 
                 st.session_state.chat_history = [{"role": "assistant", "content": clean_resp}]
-                st.session_state.needs_handshake = False # RESET THE TRIGGER
-                st.rerun()
+                st.session_state.needs_handshake = False 
+                st.rerun()  # This ensures Column 2 clears and moves to standard display
 
-            # Standard chat display logic continues below...
-            st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
+        # 2. STANDARD DISPLAY: Only reached if handshake is False
+        st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
+        
+        chat_container = st.container(height=500)
+        for msg in st.session_state.chat_history:
+            with chat_container.chat_message(msg["role"]):
+                st.write(msg["content"])
+                
+        if user_input := st.chat_input("Provide evidence..."):
+            # REPAIR: Define csf_context here for the standard interaction
+            csf_context = {
+                'id': st.session_state.active_csf,
+                'name': active_csf_node.get('name'),
+                'type': attribs.find('Type').text,
+                'context_brief': attribs.find('Context').text,
+                'criteria': [i.text for i in attribs.find('Criteria').findall('Item')]
+            }
             
-            # Chat display container
-            chat_container = st.container(height=500)
-            for msg in st.session_state.chat_history:
-                with chat_container.chat_message(msg["role"]):
-                    st.write(msg["content"])
-                    
-            # 4. The Interaction Loop
-            if user_input := st.chat_input("Provide evidence..."):
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
-                
-                # Call the AI (Make sure your get_auditor_response function is also 'No-NS')
-                response = get_auditor_response(user_input, csf_context)
-                
-                # --- REGEX INGESTION ENGINE ---
-                # A. Binary Pass
-                if "[VALIDATE: ALL]" in response:
-                    st.session_state.archived_status[st.session_state.active_csf] = True
-                    st.toast(f"✅ {csf_context['name']} Validated")
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            response = get_auditor_response(user_input, csf_context)
+            
+            # --- REGEX INGESTION ENGINE ---
+            if "[VALIDATE: ALL]" in response:
+                st.session_state.archived_status[st.session_state.active_csf] = True
+                st.toast(f"✅ {csf_context['name']} Validated")
 
-                # B. Proportional Score (0-100)
-                score_match = re.search(r"\[SCORE: (\d+)\]", response)
-                if score_match:
-                    val = int(score_match.group(1))
-                    if "csf_scores" not in st.session_state:
-                        st.session_state.csf_scores = {}
-                    st.session_state.csf_scores[st.session_state.active_csf] = val
-                    st.toast(f"📊 Readiness Updated: {val}%")
+            score_match = re.search(r"\[SCORE: (\d+)\]", response)
+            if score_match:
+                val = int(score_match.group(1))
+                if "csf_scores" not in st.session_state: st.session_state.csf_scores = {}
+                st.session_state.csf_scores[st.session_state.active_csf] = val
+                st.toast(f"📊 Readiness Updated: {val}%")
 
-                # 5. Scrub the tags and save for a clean UI
-                clean_resp = re.sub(r"\[.*?\]", "", response).strip()
-                st.session_state.chat_history.append({"role": "assistant", "content": clean_resp})
-                
-                st.rerun()
+            clean_resp = re.sub(r"\[.*?\]", "", response).strip()
+            st.session_state.chat_history.append({"role": "assistant", "content": clean_resp})
+            st.rerun()
 
     # COLUMN 3: MoSCoW Status Boxes
     with col3:
