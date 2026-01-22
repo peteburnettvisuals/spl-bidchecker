@@ -151,6 +151,38 @@ if "authenticator" not in st.session_state:
 
 authenticator = st.session_state.authenticator
 
+# --- DATABASE SYNC ENGINE ---
+def save_audit_progress():
+    """Pushes all histories, scores, and archived states to Firestore."""
+    if st.session_state.get("authentication_status") and st.session_state.get("username"):
+        user_email = st.session_state["username"]
+        doc_ref = db.collection("audits").document(user_email)
+        
+        doc_ref.set({
+            "all_histories": st.session_state.all_histories,
+            "csf_scores": st.session_state.get("csf_scores", {}),
+            "archived_status": st.session_state.archived_status,
+            "active_csf": st.session_state.active_csf,
+            "last_updated": firestore.SERVER_TIMESTAMP
+        }, merge=True)
+
+def load_audit_progress():
+    """Pull previous audit state from Firestore into session_state."""
+    if st.session_state.get("authentication_status") and st.session_state.get("username"):
+        user_email = st.session_state["username"]
+        doc = db.collection("audits").document(user_email).get()
+        
+        if doc.exists:
+            data = doc.to_dict()
+            st.session_state.all_histories = data.get("all_histories", {})
+            st.session_state.csf_scores = data.get("csf_scores", {})
+            st.session_state.archived_status = data.get("archived_status", {})
+            st.session_state.active_csf = data.get("active_csf", "CSF-GOV-01")
+            # Set chat_history to the last active session
+            st.session_state.chat_history = st.session_state.all_histories.get(st.session_state.active_csf, [])
+            return True
+    return False
+
 
 # --- 5. UI LAYOUT (3-COLUMN SKETCH) ---
 st.set_page_config(layout="wide", page_title="SPL Bid Readiness")
@@ -185,9 +217,13 @@ if not st.session_state.get("authentication_status"):
                 # Inject credentials into session state for global access
                 st.session_state["username"] = st.session_state["username"]
                 st.session_state["name"] = st.session_state["name"]
+
+                # NEW: Restore previous session from DB
+                with st.spinner("Restoring Audit Intelligence..."):
+                    load_audit_progress()
                 
-                st.toast(f"Authentication Successful. Accessing SPL C2...")
-                time.sleep(0.5) 
+                st.toast(f"Welcome back! Loading your data ...")
+                time.sleep(1) 
                 st.rerun() # This triggers the 'else' block immediately
                 
             elif st.session_state.get("authentication_status") is False:
@@ -229,8 +265,11 @@ else:
 
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
-        st.header("🦅 TOTAL READINESS")
-        
+        st.header("Bid Readiness Checker")
+
+        st.caption(f"👤 OPERATOR: {st.session_state.get('name', 'Unknown User')}")
+        st.caption(f"🏢 COMPANY: {st.session_state.get('company', 'Unknown Corp')}")
+                
         # Calculate scores
         max_score = sum(int(csf.find('CanonicalAttributes/Multiplier').text) * 100 
                         for csf in root.findall('.//CSF'))
@@ -293,7 +332,7 @@ else:
                         "color": "#ffffff",
                         "fontSize": 32,
                         "fontWeight": "bold",
-                        "fontFamily": "Courier New" # Matches your terminal aesthetic
+                        "fontFamily": "Open Sans" # Matches your terminal aesthetic
                     },
                     "data": [{"value": readiness_pct}]
                 }
@@ -303,14 +342,12 @@ else:
         # Force a specific height and key to trigger a fresh render
         st_echarts(options=gauge_option, height="180px", key="readiness_gauge_v1")
         
-        st.markdown(f"<p style='text-align: center;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
-        
         # Fetch data from session state
         archived = st.session_state.get("archived_status", {})
         
                
-        st.divider()
-        st.subheader("📁 Categories")
+        
+        st.subheader("Readiness Categories:")
         for cat in root.findall('Category'):
             cat_id = cat.get('id')
             cat_name = cat.get('name')
@@ -348,9 +385,11 @@ else:
 
     # --- COLUMN 1: Unique Key Fix ---
     with col1:
-        st.subheader("Critical Success Factors")
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
         category_node = root.find(f".//Category[@id='{active_cat_id}']")
+        cat_display_name = category_node.get('name') if category_node is not None else "Selection"
+        
+        st.subheader("Critical Success Factors for {cat_display_name}")
         
         if category_node is not None:
             # Use a set to track rendered IDs in this specific loop run
@@ -444,7 +483,7 @@ else:
 
             # SAVE-BACK: Ensure the current chat is archived for this specific CSF
             st.session_state.all_histories[st.session_state.active_csf] = st.session_state.chat_history
-            
+            save_audit_progress()
             # UI Logic: Apply score to the current active CSF
             score_match = re.search(r"\[SCORE: (\d+)\]", response)
             if score_match:
@@ -459,6 +498,7 @@ else:
                 
             clean_resp = re.sub(r"\[.*?\]", "", response).strip()
             st.session_state.chat_history.append({"role": "model", "content": clean_resp})
+            # NEW: Trigger save to DB
             st.rerun()
 
     # --- COLUMN 3: STABILIZED CHECKLIST ---
