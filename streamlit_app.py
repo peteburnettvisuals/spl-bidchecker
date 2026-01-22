@@ -46,11 +46,11 @@ if "archived_status" not in st.session_state:
     st.session_state.archived_status = {}
 
 # --- 4. THE AI AUDITOR ENGINE ---
+# --- 4. THE AI AUDITOR ENGINE (STABILIZED) ---
 def get_auditor_response(user_input, csf_data):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     
-    # MISSION BRIEF: Defined at the model level for stability
     sys_instr = f"""
     ROLE: SPL Lead Auditor.
     CSF: {csf_data['name']} (ID: {csf_data['id']}).
@@ -75,14 +75,15 @@ def get_auditor_response(user_input, csf_data):
     )
     
     # THE REPAIR: 
-    # Use None instead of [] for the very first message
-    if user_input == "INITIATE_HANDSHAKE" or not st.session_state.chat_history:
-        history = None
+    # For the handshake, use generate_content to avoid chat-state conflicts
+    if user_input == "INITIATE_HANDSHAKE":
+        response = model.generate_content(user_input)
     else:
-        history = st.session_state.chat_history
-    
-    chat = model.start_chat(history=history)
-    response = chat.send_message(user_input)
+        # Standard chat for follow-up turns
+        history = st.session_state.chat_history if st.session_state.chat_history else None
+        chat = model.start_chat(history=history)
+        response = chat.send_message(user_input)
+        
     return response.text
 
 def calculate_live_score(root, archived_status, csf_scores):
