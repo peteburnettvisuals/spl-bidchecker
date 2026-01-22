@@ -270,79 +270,48 @@ else:
         st.caption(f"👤 USER: {st.session_state.get('name', 'Unknown User')}")
         st.caption(f"🏢 COMPANY: {st.session_state.get('company', 'Unknown Corp')}")
                 
-        # Calculate scores
-        max_score = sum(int(csf.find('CanonicalAttributes/Multiplier').text) * 100 
-                        for csf in root.findall('.//CSF'))
-        live_score = calculate_live_score(root, st.session_state.archived_status, st.session_state.get("csf_scores", {}))
-        readiness_pct = int((live_score / max_score) * 100) if max_score > 0 else 0
+        try:
+            # Calculate scores
+            max_score = sum(int(csf.find('CanonicalAttributes/Multiplier').text) * 100 
+                            for csf in root.findall('.//CSF'))
+            live_score = calculate_live_score(root, st.session_state.archived_status, st.session_state.get("csf_scores", {}))
+            readiness_pct = int((live_score / max_score) * 100) if max_score > 0 else 0
 
-        # Ultra-stable ECharts config
-        gauge_option = {
-            "series": [
-                {
+            # High-Fidelity Gauge Config
+            gauge_option = {
+                "series": [{
                     "type": "gauge",
-                    "startAngle": 190, # Slight overlap for a more circular feel
+                    "startAngle": 190,
                     "endAngle": -10,
-                    "radius": "95%",
-                    "center": ["50%", "70%"],
+                    "center": ["50%", "75%"],
+                    "radius": "100%",
                     "itemStyle": {
                         "color": "#00ffcc",
                         "shadowColor": "rgba(0, 255, 204, 0.8)",
-                        "shadowBlur": 20, # Intense phosphorus glow
-                        "shadowOffsetX": 0,
-                        "shadowOffsetY": 0
+                        "shadowBlur": 20
                     },
-                    "progress": {
-                        "show": True,
-                        "roundCap": True,
-                        "width": 18,
-                        "itemStyle": {
-                            # Gradient effect for the "fill"
-                            "color": {
-                                "type": 'linear',
-                                "x": 0, "y": 0, "x2": 0, "y2": 1,
-                                "colorStops": [
-                                    {"offset": 0, "color": '#00ffcc'}, 
-                                    {"offset": 1, "color": '#008877'}
-                                ]
-                            }
-                        }
-                    },
-                    "pointer": {
-                        "icon": "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z", # Sharp forensic needle
-                        "length": "15%",
-                        "width": 12,
-                        "offsetCenter": [0, "-55%"],
-                        "itemStyle": {"color": "auto"}
-                    },
-                    "axisLine": {
-                        "roundCap": True,
-                        "lineStyle": {
-                            "width": 18,
-                            "color": [[1, "rgba(255, 255, 255, 0.05)"]] # Subtle ghost track
-                        }
-                    },
+                    "progress": {"show": True, "roundCap": True, "width": 15},
+                    "axisLine": {"lineStyle": {"width": 15, "color": [[1, "rgba(255,255,255,0.05)"]]}},
+                    "pointer": {"show": True, "length": "12%", "width": 8},
                     "axisTick": {"show": False},
                     "splitLine": {"show": False},
                     "axisLabel": {"show": False},
                     "detail": {
-                        "offsetCenter": [0, "15%"],
-                        "valueAnimation": True,
+                        "offsetCenter": [0, "20%"],
                         "formatter": "{value}%",
                         "color": "#ffffff",
-                        "fontSize": 32,
-                        "fontWeight": "bold",
-                        "fontFamily": "Courier New" # Matches your terminal aesthetic
+                        "fontSize": 28
                     },
                     "data": [{"value": readiness_pct}]
-                }
-            ]
-        }
+                }]
+            }
 
-        # Force a specific height and key to trigger a fresh render
-        st_echarts(options=gauge_option, height="180px", key="readiness_gauge_v1")
+            # RENDER GAUGE: Fixed height is critical for sidebar stability
+            st_echarts(options=gauge_option, height="180px", key="readiness_gauge_v2")
+            st.markdown(f"<p style='text-align: center;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
 
-        st.markdown(f"<p style='text-align: center;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
+        except Exception as e:
+            st.error(f"Gauge Telemetry Error: {e}")
         
         # Fetch data from session state
         archived = st.session_state.get("archived_status", {})
