@@ -266,6 +266,7 @@ else:
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
         st.header("Bid Readiness Checker")
+        archived = st.session_state.get("archived_status", {})
                 
         try:
             # Calculate scores
@@ -345,7 +346,7 @@ else:
             st.error(f"Gauge Telemetry Error: {e}")
         
         # Fetch data from session state
-        archived = st.session_state.get("archived_status", {})
+        
         
         
         st.caption(f"USER: {st.session_state.get('name', 'Unknown User')}")
@@ -488,6 +489,7 @@ else:
             # SAVE-BACK: Ensure the current chat is archived for this specific CSF
             st.session_state.all_histories[st.session_state.active_csf] = st.session_state.chat_history
             save_audit_progress()
+
             # UI Logic: Apply score to the current active CSF
             score_match = re.search(r"\[SCORE: (\d+)\]", response)
             if score_match:
@@ -495,10 +497,12 @@ else:
                 # The UI knows which one to update via st.session_state.active_csf
                 if "csf_scores" not in st.session_state: st.session_state.csf_scores = {}
                 st.session_state.csf_scores[st.session_state.active_csf] = val
+                save_audit_progress()
 
             if "[VALIDATE: ALL]" in response:
                 # Set the entire CSF to True for the sidebar speedometer logic
                 st.session_state.archived_status[st.session_state.active_csf] = True
+                save_audit_progress()
                 
             clean_resp = re.sub(r"\[.*?\]", "", response).strip()
             st.session_state.chat_history.append({"role": "model", "content": clean_resp})
