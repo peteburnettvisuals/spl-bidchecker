@@ -357,8 +357,8 @@ else:
                 st.session_state.csf_scores[st.session_state.active_csf] = val
 
             if "[VALIDATE: ALL]" in response:
-            # Set the entire CSF to True for the sidebar speedometer logic
-            st.session_state.archived_status[st.session_state.active_csf] = True
+                # Set the entire CSF to True for the sidebar speedometer logic
+                st.session_state.archived_status[st.session_state.active_csf] = True
                 
             clean_resp = re.sub(r"\[.*?\]", "", response).strip()
             st.session_state.chat_history.append({"role": "model", "content": clean_resp})
