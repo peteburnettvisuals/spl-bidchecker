@@ -255,12 +255,12 @@ else:
                 st.session_state.archived_status.get(cid) == True or 
                 st.session_state.get("csf_scores", {}).get(cid, 0) >= 85
                 for cid in cat_csf_ids
-    )
+            )
     
-    cat_label = f"{cat_name} ✅" if is_cat_complete else cat_name
-    
-    if st.button(cat_label, key=f"cat_btn_{cat_id}"):
-        st.session_state.active_cat = cat_id
+        cat_label = f"{cat_name} ✅" if is_cat_complete else cat_name
+        
+        if st.button(cat_label, key=f"cat_btn_{cat_id}"):
+            st.session_state.active_cat = cat_id
 
     # MAIN INTERFACE: 3 Columns
     col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
