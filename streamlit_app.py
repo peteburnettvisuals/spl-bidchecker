@@ -267,7 +267,7 @@ else:
     with st.sidebar:
         st.header("Bid Readiness Checker")
 
-        st.caption(f"👤 OPERATOR: {st.session_state.get('name', 'Unknown User')}")
+        st.caption(f"👤 USER: {st.session_state.get('name', 'Unknown User')}")
         st.caption(f"🏢 COMPANY: {st.session_state.get('company', 'Unknown Corp')}")
                 
         # Calculate scores
@@ -332,7 +332,7 @@ else:
                         "color": "#ffffff",
                         "fontSize": 32,
                         "fontWeight": "bold",
-                        "fontFamily": "Open Sans" # Matches your terminal aesthetic
+                        "fontFamily": "Arial" # Matches your terminal aesthetic
                     },
                     "data": [{"value": readiness_pct}]
                 }
@@ -388,8 +388,8 @@ else:
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
         category_node = root.find(f".//Category[@id='{active_cat_id}']")
         cat_display_name = category_node.get('name') if category_node is not None else "Selection"
-        
-        st.subheader("Critical Success Factors for {cat_display_name}")
+
+        st.subheader(f"Critical Success Factors for {cat_display_name}")
         
         if category_node is not None:
             # Use a set to track rendered IDs in this specific loop run
