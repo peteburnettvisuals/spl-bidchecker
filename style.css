@@ -9,7 +9,7 @@
     background-position: center;
     background-repeat: no-repeat;
     color: #FFFFFF !important;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Open Sans', sans-serif;
 }
 
 /* 2. SIDEBAR & METRICS */
@@ -146,4 +146,23 @@ li::marker {
 iframe[title="streamlit_echarts.st_echarts"] {
     border: none !important;
     filter: drop-shadow(0 0 5px rgba(0, 255, 204, 0.2));
+}
+
+/* Ensure sidebar content scales down gracefully */
+section[data-testid="stSidebar"] > div {
+    padding-top: 1rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+/* Force specific widget widths to prevent horizontal scrolling */
+div[data-testid="stVerticalBlock"] > div {
+    width: 100% !important;
+}
+
+/* Adjust button font size for the Category Taps */
+button[kind="secondary"], button[kind="primary"] {
+    font-size: 0.8rem !important;
+    white-space: normal !important; /* Wrap long CSF names */
+    height: auto !important;
 }

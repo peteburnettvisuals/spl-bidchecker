@@ -186,6 +186,9 @@ def load_audit_progress():
 
 # --- 5. UI LAYOUT (3-COLUMN SKETCH) ---
 st.set_page_config(layout="wide", page_title="SPL Bid Readiness")
+html {
+    zoom: 0.9; /* Slightly scales the entire UI down for small resolutions */
+}
 
 # Load XML data
 root = load_universal_schema('bidcheck-config.xml')
@@ -283,7 +286,7 @@ else:
 
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
-        st.header("Bid Readiness Checker")
+        st.header("Bid Readiness")
                         
         try:
             # 1. Calculation Safety
@@ -303,8 +306,8 @@ else:
             gauge_option = {
                 "series": [{
                     "type": "gauge",
-                    "startAngle": 180,
-                    "endAngle": 0,
+                    "startAngle": 190,
+                    "endAngle": -10,
                     "radius": "100%", 
                     "center": ["50%", "85%"], # Pivot point pushed up to avoid clipping
                     "pointer": {"show": False},
@@ -327,7 +330,7 @@ else:
                         "offsetCenter": [0, "-15%"], 
                         "formatter": "{value}%",
                         "color": "#ffffff",
-                        "fontSize": 28,
+                        "fontSize": "1.5rem",
                         "fontWeight": "bold",
                         "fontFamily": "Open Sans, sans-serif"
                     },
@@ -338,7 +341,7 @@ else:
             # 3. Force Render with unique key
             st_echarts(
                 options=gauge_option, 
-                height="200px", 
+                height="150px", 
                 key=f"gauge_{unix_key}" 
             )
             st.markdown(f"<p style='text-align: center; margin-top:-30px;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
