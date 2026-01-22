@@ -328,9 +328,9 @@ else:
                             "valueAnimation": True,
                             "formatter": "{value}%",
                             "color": "#ffffff",
-                            "fontSize": 32,
+                            "fontSize": 28,
                             "fontWeight": "bold",
-                            "fontFamily": "Courier New" # Matches your terminal aesthetic
+                            "fontFamily": "Open Sans, Arial, sans-serif" # Matches your terminal aesthetic
                         },
                         "data": [{"value": readiness_pct}]
                     }
