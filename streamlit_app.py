@@ -46,27 +46,26 @@ if "archived_status" not in st.session_state:
     st.session_state.archived_status = {}
 
 # --- 4. THE AI AUDITOR ENGINE ---
-# --- 4. THE AI AUDITOR ENGINE (STABILIZED) ---
 def get_auditor_response(user_input, csf_data):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     
+    # 1. Standardize the System Instruction
     sys_instr = f"""
     ROLE: SPL Lead Auditor.
     CSF: {csf_data['name']} (ID: {csf_data['id']}).
     MISSION BRIEF: {csf_data['context_brief']}
     MODE: {csf_data['type']}
     
-    CRITERIA: 
+    CRITERIA STANDARDS:
     {chr(10).join([f"- {c}" for c in csf_data['criteria']])}
     
-    IF user says 'INITIATE_HANDSHAKE':
-    - Do NOT ask for evidence. Conduct a handshake explaining the 'Why'.
-    - End by asking if they believe they meet the criteria.
-    
-    OTHERWISE:
-    - If Binary: Append [VALIDATE: ALL] only if fully compliant.
-    - If Proportional: Append [SCORE: X] (0-100).
+    INSTRUCTIONS:
+    - If user says 'INITIATE_HANDSHAKE', conduct a professional handshake explaining the MISSION BRIEF.
+    - End the handshake by asking if they are ready to present evidence.
+    - For ongoing audits: 
+      - Binary: Append [VALIDATE: ALL] if 100% compliant.
+      - Proportional: Append [SCORE: X] (0-100) based on readiness.
     """
 
     model = genai.GenerativeModel(
@@ -74,12 +73,14 @@ def get_auditor_response(user_input, csf_data):
         system_instruction=sys_instr
     )
     
-    # THE REPAIR: 
-    # For the handshake, use generate_content to avoid chat-state conflicts
+    # 2. THE WATERTIGHT TRIGGER
     if user_input == "INITIATE_HANDSHAKE":
-        response = model.generate_content(user_input)
+        # SPOOF: Wrap the request in a user-role prompt to satisfy the API sequence
+        handshake_prompt = f"Hello. Please introduce {csf_data['name']} and give me the context for this as a requirement that I need to fulfil."
+        response = model.generate_content(handshake_prompt)
     else:
-        # Standard chat for follow-up turns
+        # Standard chat logic for follow-ups
+        # history must be None or a list of valid turns (role: user/model)
         history = st.session_state.chat_history if st.session_state.chat_history else None
         chat = model.start_chat(history=history)
         response = chat.send_message(user_input)
