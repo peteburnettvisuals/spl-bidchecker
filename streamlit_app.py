@@ -274,36 +274,43 @@ else:
         st.header("Bid Readiness Checker")
                         
         try:
-            # Hardened Score Calculation
+            # 1. Calculation Safety
             total_factors = root.findall('.//CSF')
             max_score = sum(int(csf.find('CanonicalAttributes/Multiplier').text) * 100 for csf in total_factors)
             
-            # Ensure we are using the hydrated session state
             archived = st.session_state.get("archived_status", {})
             scores = st.session_state.get("csf_scores", {})
             live_score = calculate_live_score(root, archived, scores)
             
-            # Convert to 0-100 float for the gauge
+            # Ensure readiness_pct is a clean number for ECharts
             readiness_pct = round((live_score / max_score) * 100, 1) if max_score > 0 else 0.0
 
+            # 2. Hardened HUD Config
             gauge_option = {
                 "series": [{
                     "type": "gauge",
                     "startAngle": 180,
                     "endAngle": 0,
-                    "min": 0,
-                    "max": 100,
-                    "radius": "100%", # Use full sidebar width
-                    "center": ["50%", "85%"], # Push the pivot point up from the bottom
+                    "radius": "100%", 
+                    "center": ["50%", "85%"], # Pivot point pushed up to avoid clipping
                     "pointer": {"show": False},
-                    "itemStyle": {"color": "#00ffcc", "shadowBlur": 15, "shadowColor": "rgba(0, 255, 204, 0.6)"},
+                    "itemStyle": {
+                        "color": "#00ffcc", 
+                        "shadowBlur": 15, 
+                        "shadowColor": "rgba(0, 255, 204, 0.6)"
+                    },
                     "progress": {"show": True, "roundCap": True, "width": 15},
-                    "axisLine": {"lineStyle": {"width": 15, "color": [[1, "rgba(255, 255, 255, 0.05)"]]}},
+                    "axisLine": {
+                        "lineStyle": {
+                            "width": 15, 
+                            "color": [[1, "rgba(255, 255, 255, 0.05)"]]
+                        }
+                    },
                     "axisTick": {"show": False},
                     "splitLine": {"show": False},
                     "axisLabel": {"show": False},
                     "detail": {
-                        "offsetCenter": [0, "-15%"], # Center the text inside the arc
+                        "offsetCenter": [0, "-15%"], 
                         "formatter": "{value}%",
                         "color": "#ffffff",
                         "fontSize": 28,
@@ -314,12 +321,13 @@ else:
                 }]
             }
 
-            # Use a dynamic key based on score to force a fresh render when progress is made
-            st_echarts(options=gauge_option, height="200px", key=f"gauge_{live_score}")
+            # 3. Force Render with unique key
+            st_echarts(options=gauge_option, height="200px", key=f"gauge_final_v4")
             st.markdown(f"<p style='text-align: center; margin-top:-30px;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
 
         except Exception as e:
-            st.error(f"Telemetry Offline: {e}")
+            # This will tell you exactly if a variable name is missing
+            st.error(f"HUD Telemetry Error: {e}")
         
         # Fetch data from session state
         
