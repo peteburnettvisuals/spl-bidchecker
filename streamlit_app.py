@@ -322,7 +322,7 @@ else:
             }
 
             # 3. Force Render with unique key
-            st_echarts(options=gauge_option, height="200px", key=f"gauge_final_v5")
+            st_echarts(options=gauge_option, height="200px", key=f"gauge_final_v6")
             st.markdown(f"<p style='text-align: center; margin-top:-30px;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
 
         except Exception as e:
