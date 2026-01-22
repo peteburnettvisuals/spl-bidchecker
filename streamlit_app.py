@@ -45,43 +45,41 @@ if "archived_status" not in st.session_state:
     # Tracks which criteria items are met: { "CSF_ID": { "Criteria_Text": True/False } }
     st.session_state.archived_status = {}
 
-# --- 4. THE AI AUDITOR ENGINE ---
+
+# --- 4. THE AI AUDITOR ENGINE (STABILIZED) ---
 def get_auditor_response(user_input, csf_data):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     
-    # 1. Standardize the System Instruction
-    sys_instr = f"""
-    ROLE: SPL Lead Auditor.
-    CSF: {csf_data['name']} (ID: {csf_data['id']}).
-    MISSION BRIEF: {csf_data['context_brief']}
-    MODE: {csf_data['type']}
+    # Ensure criteria is a clean string list
+    criteria_list = [f"- {c}" for c in csf_data.get('criteria', [])]
+    criteria_text = "\n".join(criteria_list)
     
-    CRITERIA STANDARDS:
-    {chr(10).join([f"- {c}" for c in csf_data['criteria']])}
-    
-    INSTRUCTIONS:
-    - If user says 'INITIATE_HANDSHAKE', conduct a professional handshake explaining the MISSION BRIEF.
-    - End the handshake by asking if they are ready to present evidence.
-    - For ongoing audits: 
-      - Binary: Append [VALIDATE: ALL] if 100% compliant.
-      - Proportional: Append [SCORE: X] (0-100) based on readiness.
-    """
+    # Build a clean, single-string system instruction
+    sys_instr = (
+        f"ROLE: SPL Lead Auditor.\n"
+        f"CSF: {csf_data['name']} (ID: {csf_data['id']}).\n"
+        f"MISSION BRIEF: {csf_data['context_brief']}\n"
+        f"MODE: {csf_data['type']}\n\n"
+        f"CRITERIA STANDARDS:\n{criteria_text}\n\n"
+        f"INSTRUCTIONS:\n"
+        f"- Handshake: Professional introduction + Mission Brief.\n"
+        f"- Evaluation: Binary adds [VALIDATE: ALL], Proportional adds [SCORE: 0-100]."
+    )
 
     model = genai.GenerativeModel(
         model_name='gemini-2.0-flash',
         system_instruction=sys_instr
     )
     
-    # 2. THE WATERTIGHT TRIGGER
     if user_input == "INITIATE_HANDSHAKE":
-        # SPOOF: Wrap the request in a user-role prompt to satisfy the API sequence
-        handshake_prompt = f"Hello. Please introduce {csf_data['name']} and give me the context for this as a requirement that I need to fulfil."
-        response = model.generate_content(handshake_prompt)
+        # The prompt must be a clear string for generate_content
+        prompt = f"Please introduce {csf_data['name']} and explain its context as a procurement requirement."
+        response = model.generate_content(prompt)
     else:
-        # Standard chat logic for follow-ups
-        # history must be None or a list of valid turns (role: user/model)
-        history = st.session_state.chat_history if st.session_state.chat_history else None
+        # Standard chat logic
+        # FIX: Explicitly check for an empty list and pass None
+        history = st.session_state.chat_history if len(st.session_state.chat_history) > 0 else None
         chat = model.start_chat(history=history)
         response = chat.send_message(user_input)
         
