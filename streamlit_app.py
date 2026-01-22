@@ -231,48 +231,41 @@ else:
     with st.sidebar:
         st.header("🦅 TOTAL READINESS")
         
-        # Calculate Max & Live Scores (Your existing logic)
+        # Calculate scores
         max_score = sum(int(csf.find('CanonicalAttributes/Multiplier').text) * 100 
                         for csf in root.findall('.//CSF'))
         live_score = calculate_live_score(root, st.session_state.archived_status, st.session_state.get("csf_scores", {}))
-        
-        # Calculate Percentage for the needle
-        readiness_pct = round((live_score / max_score) * 100, 1) if max_score > 0 else 0
+        readiness_pct = int((live_score / max_score) * 100) if max_score > 0 else 0
 
-        # ECharts Gauge Configuration
-        option = {
-            "series": [
-                {
-                    "type": "gauge",
-                    "startAngle": 180,
-                    "endAngle": 0,
-                    "min": 0,
-                    "max": 100,
-                    "splitNumber": 5,
-                    "itemStyle": {"color": "#00ffcc", "shadowColor": "rgba(0, 255, 204, 0.45)", "shadowBlur": 10},
-                    "progress": {"show": True, "roundCap": True, "width": 18},
-                    "pointer": {"icon": "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z", "length": "12%", "width": 20, "offsetCenter": [0, "-55%"], "itemStyle": {"color": "auto"}},
-                    "axisLine": {"roundCap": True, "lineStyle": {"width": 18, "color": [[1, "#111111"]]}},
-                    "axisTick": {"show": False},
-                    "splitLine": {"show": False},
-                    "axisLabel": {"show": False},
-                    "title": {"show": False},
-                    "detail": {
-                        "offsetCenter": [0, "20%"],
-                        "valueAnimation": True,
-                        "formatter": "{value}%",
-                        "color": "#ffffff",
-                        "fontSize": 30,
-                    },
-                    "data": [{"value": readiness_pct}],
-                }
-            ]
+        # Ultra-stable ECharts config
+        gauge_option = {
+            "backgroundColor": "transparent",
+            "series": [{
+                "type": 'gauge',
+                "startAngle": 180,
+                "endAngle": 0,
+                "radius": '100%', # Fill the width
+                "center": ['50%', '70%'], # Move up slightly to avoid clipping
+                "progress": {"show": True, "width": 12, "itemStyle": {"color": '#00ffcc'}},
+                "axisLine": {"lineStyle": {"width": 12, "color": [[1, '#1a1a1a']]}},
+                "axisTick": {"show": False},
+                "splitLine": {"show": False},
+                "axisLabel": {"show": False},
+                "pointer": {"show": True, "length": '60%', "width": 6},
+                "detail": {
+                    "offsetCenter": [0, '20%'],
+                    "formatter": '{value}%',
+                    "color": '#ffffff',
+                    "fontSize": 20
+                },
+                "data": [{"value": readiness_pct}]
+            }]
         }
 
-        # Render the Gauge (Height adjusted for the semi-circle)
-        st_echarts(options=option, height="250px")
+        # Force a specific height and key to trigger a fresh render
+        st_echarts(options=gauge_option, height="180px", key="readiness_gauge_v1")
         
-        st.markdown(f"<p style='text-align: center; color: #888;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
         
         # Fetch data from session state
         archived = st.session_state.get("archived_status", {})
