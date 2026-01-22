@@ -279,34 +279,50 @@ else:
 
             # High-Fidelity Gauge Config
             gauge_option = {
-                "series": [{
-                    "type": "gauge",
-                    "startAngle": 190,
-                    "endAngle": -10,
-                    "center": ["50%", "75%"],
-                    "radius": "100%",
-                    "pointer": {"show": False},
-                    "itemStyle": {
-                        "color": "#00ffcc",
-                        "shadowColor": "rgba(0, 255, 204, 0.8)",
-                        "shadowBlur": 20
-                    },
-                    "progress": {"show": True, "roundCap": True, "width": 15},
-                    "axisLine": {"lineStyle": {"width": 15, "color": [[1, "rgba(255,255,255,0.05)"]]}},
-                    "axisTick": {"show": False},
-                    "splitLine": {"show": False},
-                    "axisLabel": {"show": False},
-                    "detail": {
-                        "offsetCenter": [0, "20%"],
-                        "formatter": "{value}%",
-                        "color": "#ffffff",
-                        "fontSize": 28
-                    },
-                    "data": [{"value": readiness_pct}]
-                }]
+                "series": [
+                    {
+                        "type": "gauge",
+                        "startAngle": 190,
+                        "endAngle": -10,
+                        "radius": "90%",
+                        "center": ["50%", "70%"],
+                        # THE FIX: Disable the physical needle pointer
+                        "pointer": {"show": False}, 
+                        "itemStyle": {
+                            "color": "#00ffcc",
+                            "shadowColor": "rgba(0, 255, 204, 0.8)",
+                            "shadowBlur": 20
+                        },
+                        "progress": {
+                            "show": True,
+                            "roundCap": True,
+                            "width": 18
+                        },
+                        "axisLine": {
+                            "roundCap": True,
+                            "lineStyle": {
+                                "width": 18, 
+                                "color": [[1, "rgba(255, 255, 255, 0.05)"]]
+                            }
+                        },
+                        "axisTick": {"show": False},
+                        "splitLine": {"show": False},
+                        "axisLabel": {"show": False},
+                        "detail": {
+                            "offsetCenter": [0, "0%"], # Centered since there is no needle
+                            "valueAnimation": True,
+                            "formatter": "{value}%",
+                            "color": "#ffffff",
+                            "fontSize": 32,
+                            "fontWeight": "bold",
+                            "fontFamily": "Courier New"
+                        },
+                        "data": [{"value": readiness_pct}]
+                    }
+                ]
             }
 
-            # RENDER GAUGE: Fixed height is critical for sidebar stability
+            # Render with the existing key to maintain stability
             st_echarts(options=gauge_option, height="180px", key="readiness_gauge_v2")
             st.markdown(f"<p style='text-align: center;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
 
