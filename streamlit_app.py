@@ -272,84 +272,54 @@ else:
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
         st.header("Bid Readiness Checker")
-        archived = st.session_state.get("archived_status", {})
-                
+                        
         try:
-            # Calculate scores
-            max_score = sum(int(csf.find('CanonicalAttributes/Multiplier').text) * 100 
-                            for csf in root.findall('.//CSF'))
-            live_score = calculate_live_score(root, st.session_state.archived_status, st.session_state.get("csf_scores", {}))
-            readiness_pct = int((live_score / max_score) * 100) if max_score > 0 else 0
+            # Hardened Score Calculation
+            total_factors = root.findall('.//CSF')
+            max_score = sum(int(csf.find('CanonicalAttributes/Multiplier').text) * 100 for csf in total_factors)
+            
+            # Ensure we are using the hydrated session state
+            archived = st.session_state.get("archived_status", {})
+            scores = st.session_state.get("csf_scores", {})
+            live_score = calculate_live_score(root, archived, scores)
+            
+            # Convert to 0-100 float for the gauge
+            readiness_pct = round((live_score / max_score) * 100, 1) if max_score > 0 else 0.0
 
-            # High-Fidelity Gauge Config
             gauge_option = {
-                "series": [
-                    {
-                        "type": "gauge",
-                        "startAngle": 190, # Slight overlap for a more circular feel
-                        "endAngle": -10,
-                        "radius": "95%",
-                        "center": ["50%", "70%"],
-                        "itemStyle": {
-                            "color": "#00ffcc",
-                            "shadowColor": "rgba(0, 255, 204, 0.8)",
-                            "shadowBlur": 20, # Intense phosphorus glow
-                            "shadowOffsetX": 0,
-                            "shadowOffsetY": 0
-                        },
-                        "progress": {
-                            "show": True,
-                            "roundCap": True,
-                            "width": 18,
-                            "itemStyle": {
-                                # Gradient effect for the "fill"
-                                "color": {
-                                    "type": 'linear',
-                                    "x": 0, "y": 0, "x2": 0, "y2": 1,
-                                    "colorStops": [
-                                        {"offset": 0, "color": '#00ffcc'}, 
-                                        {"offset": 1, "color": '#008877'}
-                                    ]
-                                }
-                            }
-                        },
-                        "pointer": {
-                            "icon": "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z", # Sharp forensic needle
-                            "length": "15%",
-                            "width": 12,
-                            "offsetCenter": [0, "-55%"],
-                            "itemStyle": {"color": "auto"}
-                        },
-                        "axisLine": {
-                            "roundCap": True,
-                            "lineStyle": {
-                                "width": 18,
-                                "color": [[1, "rgba(255, 255, 255, 0.05)"]] # Subtle ghost track
-                            }
-                        },
-                        "axisTick": {"show": False},
-                        "splitLine": {"show": False},
-                        "axisLabel": {"show": False},
-                        "detail": {
-                            "offsetCenter": [0, "15%"],
-                            "valueAnimation": True,
-                            "formatter": "{value}%",
-                            "color": "#ffffff",
-                            "fontSize": 28,
-                            "fontWeight": "bold",
-                            "fontFamily": "Open Sans, Arial, sans-serif" # Matches your terminal aesthetic
-                        },
-                        "data": [{"value": readiness_pct}]
-                    }
-                ]
+                "series": [{
+                    "type": "gauge",
+                    "startAngle": 180,
+                    "endAngle": 0,
+                    "min": 0,
+                    "max": 100,
+                    "radius": "100%", # Use full sidebar width
+                    "center": ["50%", "85%"], # Push the pivot point up from the bottom
+                    "pointer": {"show": False},
+                    "itemStyle": {"color": "#00ffcc", "shadowBlur": 15, "shadowColor": "rgba(0, 255, 204, 0.6)"},
+                    "progress": {"show": True, "roundCap": True, "width": 15},
+                    "axisLine": {"lineStyle": {"width": 15, "color": [[1, "rgba(255, 255, 255, 0.05)"]]}},
+                    "axisTick": {"show": False},
+                    "splitLine": {"show": False},
+                    "axisLabel": {"show": False},
+                    "detail": {
+                        "offsetCenter": [0, "-15%"], # Center the text inside the arc
+                        "formatter": "{value}%",
+                        "color": "#ffffff",
+                        "fontSize": 28,
+                        "fontWeight": "bold",
+                        "fontFamily": "Open Sans, sans-serif"
+                    },
+                    "data": [{"value": readiness_pct}]
+                }]
             }
 
-            # Render with the existing key to maintain stability
-            st_echarts(options=gauge_option, height="180px", key="gauge_final_v3")
-            
+            # Use a dynamic key based on score to force a fresh render when progress is made
+            st_echarts(options=gauge_option, height="200px", key=f"gauge_{live_score}")
+            st.markdown(f"<p style='text-align: center; margin-top:-30px;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
 
         except Exception as e:
-            st.error(f"Gauge Telemetry Error: {e}")
+            st.error(f"Telemetry Offline: {e}")
         
         # Fetch data from session state
         
