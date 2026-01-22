@@ -51,34 +51,39 @@ def get_auditor_response(user_input, csf_data):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     
-    # Clean the data strings
+    # 1. CLEAN CONTEXT STRINGS
     c_name = str(csf_data.get('name', 'Audit Item'))
-    c_id = str(csf_data.get('id', 'N/A'))
     c_brief = str(csf_data.get('context_brief', 'No context.'))
     c_type = str(csf_data.get('type', 'Proportional'))
     c_list = ", ".join(csf_data.get('criteria', []))
 
-    # Build the rules as a simple string
+    # 2. THE RE-INJECTED MISSION RULES
+    # This ensures the AI knows the 'Secret Handshake' for the UI
     base_prompt = (
-        f"Act as the SPL Lead Auditor for {c_name} ({c_id}). "
-        f"Context: {c_brief}. Mode: {c_type}. Criteria: {c_list}. "
-        f"Rules: If Binary, append [VALIDATE: ALL] for pass. "
-        f"If Proportional, append [SCORE: X] (0-100)."
+        f"You are the SPL Lead Auditor for {c_name}. "
+        f"MISSION BRIEF: {c_brief}. EVALUATION MODE: {c_type}. "
+        f"CRITERIA: {c_list}. "
+        f"RULES: If MODE is 'Binary', append [VALIDATE: ALL] strictly when all criteria are met. "
+        f"If MODE is 'Proportional', append [SCORE: X] where X is 0-100 based on your audit."
     )
 
-    # Initialize model WITHOUT system_instruction parameter
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     
     if user_input == "INITIATE_HANDSHAKE":
-        # Combine instructions and request into one string
+        # One-shot stable start
         full_call = f"{base_prompt} USER: Please introduce yourself and give me the Mission Brief."
         response = model.generate_content(full_call)
     else:
-        # For standard chat, ensure history is None if empty
-        history = st.session_state.chat_history if len(st.session_state.chat_history) > 0 else None
+        # --- THE TRANSLATOR: Schema fix for [role, parts, text] ---
+        gemini_history = []
+        for msg in st.session_state.chat_history:
+            gemini_history.append({
+                "role": msg["role"],
+                "parts": [{"text": msg["content"]}]
+            })
         
-        # We add the instructions to the user input for every follow-up turn
-        chat = model.start_chat(history=history)
+        chat = model.start_chat(history=gemini_history)
+        # Re-verify the rules on every turn to prevent AI drift
         response = chat.send_message(f"Audit Rules: {base_prompt}\n\nUser Evidence: {user_input}")
         
     return response.text
