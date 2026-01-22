@@ -290,12 +290,13 @@ else:
         if st.session_state.get("needs_handshake", False):
             with st.spinner("Lead Auditor entering..."):
                 handshake_data = {
-                    'id': st.session_state.active_csf,
-                    'name': active_csf_node.get('name'),
-                    'type': attribs.find('Type').text,
-                    'context_brief': attribs.find('Context').text,
-                    'criteria': [i.text for i in attribs.find('Criteria').findall('Item')]
-                }
+                    'id': str(st.session_state.active_csf),
+                    'name': str(active_csf_node.get('name')),
+                    'type': str(attribs.find('Type').text),
+                    'context_brief': str(attribs.find('Context').text),
+                    # Ensure this is a list of STRINGS, not XML Elements
+                    'criteria': [str(i.text) for i in attribs.find('Criteria').findall('Item')]
+}
                 
                 response = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
                 clean_resp = re.sub(r"\[.*?\]", "", response).strip()
