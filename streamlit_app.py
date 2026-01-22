@@ -267,8 +267,8 @@ else:
     with st.sidebar:
         st.header("Bid Readiness Checker")
 
-        st.caption(f"👤 USER: {st.session_state.get('name', 'Unknown User')}")
-        st.caption(f"🏢 COMPANY: {st.session_state.get('company', 'Unknown Corp')}")
+        st.caption(f"USER: {st.session_state.get('name', 'Unknown User')}")
+        st.caption(f"COMPANY: {st.session_state.get('company', 'Company Name Not Listed')}")
                 
         try:
             # Calculate scores
@@ -285,6 +285,7 @@ else:
                     "endAngle": -10,
                     "center": ["50%", "75%"],
                     "radius": "100%",
+                    "pointer": {"show": False},
                     "itemStyle": {
                         "color": "#00ffcc",
                         "shadowColor": "rgba(0, 255, 204, 0.8)",
