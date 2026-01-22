@@ -67,7 +67,7 @@ def get_auditor_response(user_input, csf_data):
     )
 
     # Initialize model WITHOUT system_instruction parameter
-    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
+    model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     
     if user_input == "INITIATE_HANDSHAKE":
         # Combine instructions and request into one string
