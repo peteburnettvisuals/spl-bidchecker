@@ -127,3 +127,18 @@ input {
     color: #70e2ff !important; /* Corporate Cyan text for high visibility */
     font-weight: bold !important;
 }
+
+/* Ensure all markdown lists in chat are white */
+ul, ol {
+    color: #ffffff !important;
+}
+
+li {
+    color: #ffffff !important;
+    margin-bottom: 5px;
+}
+
+/* Optional: Ensure the numbers and bullets themselves are white */
+li::marker {
+    color: #00ffcc; /* Or use your specific cyan/white theme color */
+}
