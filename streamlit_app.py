@@ -74,9 +74,12 @@ def get_auditor_response(user_input, csf_data):
         system_instruction=sys_instr
     )
     
-    # CRITICAL: If handshake, we MUST start with empty history []
-    # Gemini throws InvalidArgument if history exists but prompt is a system restart
-    history = [] if user_input == "INITIATE_HANDSHAKE" else st.session_state.chat_history
+    # THE REPAIR: 
+    # Use None instead of [] for the very first message
+    if user_input == "INITIATE_HANDSHAKE" or not st.session_state.chat_history:
+        history = None
+    else:
+        history = st.session_state.chat_history
     
     chat = model.start_chat(history=history)
     response = chat.send_message(user_input)
