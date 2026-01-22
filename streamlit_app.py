@@ -293,7 +293,6 @@ else:
                     },
                     "progress": {"show": True, "roundCap": True, "width": 15},
                     "axisLine": {"lineStyle": {"width": 15, "color": [[1, "rgba(255,255,255,0.05)"]]}},
-                    "pointer": {"show": True, "length": "12%", "width": 8},
                     "axisTick": {"show": False},
                     "splitLine": {"show": False},
                     "axisLabel": {"show": False},
