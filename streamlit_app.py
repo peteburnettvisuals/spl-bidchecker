@@ -186,9 +186,6 @@ def load_audit_progress():
 
 # --- 5. UI LAYOUT (3-COLUMN SKETCH) ---
 st.set_page_config(layout="wide", page_title="SPL Bid Readiness")
-html {
-    zoom: 0.9; /* Slightly scales the entire UI down for small resolutions */
-}
 
 # Load XML data
 root = load_universal_schema('bidcheck-config.xml')
