@@ -57,21 +57,22 @@ def get_auditor_response(user_input, csf_data):
     
     # MISSION BRIEF: Uses the new <Context> field for the handshake
     sys_instr = f"""
-    ROLE: SPL Lead Auditor (Corporate/Procurement Focus).
-    CSF CONTEXT: {csf_data['name']} (ID: {csf_data['id']}).
-    MISSION BRIEF (The "Why"): {csf_data['context_brief']}
+    ROLE: SPL Lead Auditor.
+    CSF: {csf_data['name']}.
+    MISSION BRIEF: {csf_data['context_brief']}
     
-    EVALUATION MODE: {csf_data['type']}
-    CRITERIA STANDARDS:
-    {criteria_str}
+    IF the user says 'INITIATE_HANDSHAKE':
+    - Do NOT ask for evidence yet.
+    - Conduct a professional handshake.
+    - Explain the MISSION BRIEF (the 'Why' behind this requirement).
+    - End by asking if they believe they currently meet the criteria.
     
-    INSTRUCTIONS:
-    1. THE HANDSHAKE: Start by professionally explaining the MISSION BRIEF—why this CSF is critical for procurement.
-    2. THE AUDIT: Ask if they meet these criteria. 
-    3. THE PAYLOAD: 
+    OTHERWISE:
+    1. THE AUDIT: Ask if user believes they meet these criteria. 
+    2. THE PAYLOAD: 
        - If MODE is 'Binary': Append [VALIDATE: ALL] only if they fully comply.
        - If MODE is 'Proportional': Append [SCORE: X] where X is a value from 0-100 based on evidence.
-    4. Maintain a forensic yet helpful partner tone.
+    3. Maintain a forensic yet helpful partner tone.
     """
     
     chat = model.start_chat(history=st.session_state.chat_history)
@@ -81,20 +82,23 @@ def get_auditor_response(user_input, csf_data):
 def calculate_live_score(root, archived_status, csf_scores):
     total_weighted_points = 0
     
-    # Iterate through every CSF in the XML (No NS required)
+    # Iterate through all CSFs in the XML (Plain-text find)
     for csf in root.findall('.//CSF'):
         csf_id = csf.get('id')
         attribs = csf.find('CanonicalAttributes')
+        
+        # Pull the weight (Multiplier) from the XML
         multiplier = int(attribs.find('Multiplier').text)
         
-        # Determine the raw score (0-100)
-        # If Binary is validated, it's 100. Otherwise, check Proportional score.
+        # Calculate the raw 0-100 score for this factor
         if archived_status.get(csf_id) == True:
+            # Binary 'Must' items are cleared, awarding 100% of weight
             raw_score = 100  
         else:
+            # Proportional 'Best Guess' from the AI (Default to 0 if not yet audited)
             raw_score = csf_scores.get(csf_id, 0)
             
-        # Add to the total weighted pot
+        # Add the weighted contribution to the total
         total_weighted_points += raw_score * multiplier
                 
     return total_weighted_points
@@ -212,9 +216,16 @@ else:
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
         st.header("🦅 TOTAL READINESS")
-        # Simple score math for the demo
-        total_score = sum([1 for csf in st.session_state.archived_status if any(st.session_state.archived_status[csf].values())])
-        st.metric("WEIGHTED SCORE", f"{total_score * 100}") # Placeholder for multiplier logic
+        
+        # Fetch data from session state
+        archived = st.session_state.get("archived_status", {})
+        scores = st.session_state.get("csf_scores", {})
+        
+        # Calculate global weighted score
+        live_score = calculate_live_score(root, archived, scores)
+        
+        # Display the score prominently
+        st.metric("WEIGHTED READINESS", f"{live_score} PTS")
         
         st.divider()
         st.subheader("📁 Categories")
@@ -225,7 +236,7 @@ else:
     # MAIN INTERFACE: 3 Columns
     col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
 
-    # COLUMN 1: CSF Selection with Success Ticks
+    # COLUMN 1: CSF Selection with Automated Handshake
     with col1:
         st.subheader("Critical Success Factors")
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
@@ -236,24 +247,34 @@ else:
                 csf_id = csf.get('id')
                 csf_name = csf.get('name')
                 
-                # 1. Check for Validation (Binary) or High Readiness (Proportional)
+                # Tick Logic
                 is_validated = st.session_state.archived_status.get(csf_id, False)
                 current_val = st.session_state.get("csf_scores", {}).get(csf_id, 0)
-                
-                # 2. Determine the display label (Append tick if successful)
-                # Threshold set to 85 for Proportional Factors
                 display_label = f"{csf_name} ✅" if (is_validated or current_val >= 85) else csf_name
                 
-                # 3. Render the button
+                # --- THE TRIGGER ---
                 is_active = st.session_state.active_csf == csf_id
-                if st.button(
-                    display_label, 
-                    key=f"btn_{csf_id}", # Using f-string for key safety
-                    type="primary" if is_active else "secondary",
-                    use_container_width=True
-                ):
+                if st.button(display_label, key=f"btn_{csf_id}", type="primary" if is_active else "secondary", use_container_width=True):
                     st.session_state.active_csf = csf_id
-                    st.session_state.chat_history = [] # Reset chat for new context
+                    
+                    # REPAIR: Instead of setting to [], we generate the initial message
+                    attribs = csf.find('CanonicalAttributes')
+                    context_brief = attribs.find('Context').text
+                    
+                    # Prepare a special "silent" prompt to get the AI to start the handshake
+                    handshake_data = {
+                        'id': csf_id,
+                        'name': csf_name,
+                        'type': attribs.find('Type').text,
+                        'context_brief': context_brief,
+                        'criteria': [i.text for i in attribs.find('Criteria').findall('Item')]
+                    }
+                    
+                    # Start the history with the AI's introductory message
+                    initial_msg = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
+                    clean_handshake = re.sub(r"\[.*?\]", "", initial_msg).strip()
+                    
+                    st.session_state.chat_history = [{"role": "assistant", "content": clean_handshake}]
                     st.rerun()
 
     # COLUMN 2: The Validation Chat
