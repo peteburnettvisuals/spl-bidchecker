@@ -12,6 +12,10 @@
     font-family: 'Open Sans', sans-serif;
 }
 
+    html {
+    zoom: 0.9; /* Slightly scales the entire UI down for small resolutions */
+}
+
 /* 2. SIDEBAR & METRICS */
 [data-testid="stSidebar"] {
     background-color: rgba(2, 5, 10, 0.95) !important;
