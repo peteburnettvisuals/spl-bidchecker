@@ -239,27 +239,65 @@ else:
 
         # Ultra-stable ECharts config
         gauge_option = {
-            "backgroundColor": "transparent",
-            "series": [{
-                "type": 'gauge',
-                "startAngle": 180,
-                "endAngle": 0,
-                "radius": '100%', # Fill the width
-                "center": ['50%', '70%'], # Move up slightly to avoid clipping
-                "progress": {"show": True, "width": 12, "itemStyle": {"color": '#00ffcc'}},
-                "axisLine": {"lineStyle": {"width": 12, "color": [[1, '#1a1a1a']]}},
-                "axisTick": {"show": False},
-                "splitLine": {"show": False},
-                "axisLabel": {"show": False},
-                "pointer": {"show": True, "length": '60%', "width": 6},
-                "detail": {
-                    "offsetCenter": [0, '20%'],
-                    "formatter": '{value}%',
-                    "color": '#ffffff',
-                    "fontSize": 20
-                },
-                "data": [{"value": readiness_pct}]
-            }]
+            "series": [
+                {
+                    "type": "gauge",
+                    "startAngle": 190, # Slight overlap for a more circular feel
+                    "endAngle": -10,
+                    "radius": "95%",
+                    "center": ["50%", "70%"],
+                    "itemStyle": {
+                        "color": "#00ffcc",
+                        "shadowColor": "rgba(0, 255, 204, 0.8)",
+                        "shadowBlur": 20, # Intense phosphorus glow
+                        "shadowOffsetX": 0,
+                        "shadowOffsetY": 0
+                    },
+                    "progress": {
+                        "show": True,
+                        "roundCap": True,
+                        "width": 18,
+                        "itemStyle": {
+                            # Gradient effect for the "fill"
+                            "color": {
+                                "type": 'linear',
+                                "x": 0, "y": 0, "x2": 0, "y2": 1,
+                                "colorStops": [
+                                    {"offset": 0, "color": '#00ffcc'}, 
+                                    {"offset": 1, "color": '#008877'}
+                                ]
+                            }
+                        }
+                    },
+                    "pointer": {
+                        "icon": "path://M12.8,0.7l12,40.1H0.7L12.8,0.7z", # Sharp forensic needle
+                        "length": "15%",
+                        "width": 12,
+                        "offsetCenter": [0, "-55%"],
+                        "itemStyle": {"color": "auto"}
+                    },
+                    "axisLine": {
+                        "roundCap": True,
+                        "lineStyle": {
+                            "width": 18,
+                            "color": [[1, "rgba(255, 255, 255, 0.05)"]] # Subtle ghost track
+                        }
+                    },
+                    "axisTick": {"show": False},
+                    "splitLine": {"show": False},
+                    "axisLabel": {"show": False},
+                    "detail": {
+                        "offsetCenter": [0, "15%"],
+                        "valueAnimation": True,
+                        "formatter": "{value}%",
+                        "color": "#ffffff",
+                        "fontSize": 32,
+                        "fontWeight": "bold",
+                        "fontFamily": "Courier New" # Matches your terminal aesthetic
+                    },
+                    "data": [{"value": readiness_pct}]
+                }
+            ]
         }
 
         # Force a specific height and key to trigger a fresh render

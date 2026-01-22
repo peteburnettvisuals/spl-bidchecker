@@ -142,3 +142,8 @@ li {
 li::marker {
     color: #00ffcc; /* Or use your specific cyan/white theme color */
 }
+
+iframe[title="streamlit_echarts.st_echarts"] {
+    border: none !important;
+    filter: drop-shadow(0 0 5px rgba(0, 255, 204, 0.2));
+}
