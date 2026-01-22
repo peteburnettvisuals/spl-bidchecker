@@ -67,7 +67,7 @@ def get_auditor_response(user_input, csf_data):
         f"MISSION BRIEF: {c_brief}. EVALUATION MODE: {c_type}. "
         f"CRITERIA: {c_list}. "
         f"RULES: If MODE is 'Binary', append [VALIDATE: ALL] strictly when the user states that they beleive that all shown criteria are met."
-        f"If MODE is 'Proportional', append [SCORE: X] where X is 0-100 based on your audit."
+        f"If MODE is 'Proportional', append [SCORE: X] where X is 0-100 based on what the user says they have available."
         f"TONE OF VOICE: Friendly, helpful, professional."
     )
 
@@ -246,21 +246,33 @@ else:
             cat_id = cat.get('id')
             cat_name = cat.get('name')
             
-            # Get all CSF IDs belonging to this category from the XML
+            # 1. Check for Category Completion (Your existing logic)
             cat_csf_ids = [csf.get('id') for csf in cat.findall('CSF')]
-            
-            # Check if ALL these IDs exist in archived_status as 'True'
-            # Or have a score high enough (e.g., >= 85) to be considered 'ready'
             is_cat_complete = all(
                 st.session_state.archived_status.get(cid) == True or 
                 st.session_state.get("csf_scores", {}).get(cid, 0) >= 85
                 for cid in cat_csf_ids
             )
-    
+            
             cat_label = f"{cat_name} ✅" if is_cat_complete else cat_name
             
-            if st.button(cat_label, key=f"cat_btn_{cat_id}"):
+            if st.button(cat_label, key=f"cat_btn_{cat_id}", use_container_width=True):
+                # 2. Update the active Category
                 st.session_state.active_cat = cat_id
+                
+                # 3. SWITCH FOCUS: Find the first CSF in this new category
+                first_csf = cat.find('CSF')
+                if first_csf is not None:
+                    new_csf_id = first_csf.get('id')
+                    st.session_state.active_csf = new_csf_id
+                    
+                    # 4. LOAD HISTORY: Ensure Col 2 switches to the right chat
+                    st.session_state.chat_history = st.session_state.all_histories.get(new_csf_id, [])
+                    
+                    # 5. HANDSHAKE CHECK: Trigger if it's a fresh area
+                    st.session_state.needs_handshake = not bool(st.session_state.chat_history)
+                
+                st.rerun()
 
     # MAIN INTERFACE: 3 Columns
     col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")

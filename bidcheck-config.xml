@@ -22,7 +22,7 @@
                 <Min>0</Min>
                 <Max>100</Max>
                 <Multiplier>2</Multiplier>
-                <Type>Proportional</Type>
+                <Type>Binary</Type>
                 <Criteria>
                     <Item priority="Must">Policies must able to to be produced and supplied within 24 hours</Item>
                     <Item priority="Must">Policies must not contain contradictions as a group (ie Policy A says something different to policy B)</Item>
@@ -72,7 +72,7 @@
                 <Min>0</Min>
                 <Max>100</Max>
                 <Multiplier>2</Multiplier>
-                <Type>Proportional</Type>
+                <Type>Binary</Type>
                 <Criteria>
                     <Item priority="Must">Include Measurable commitments, not aspirations</Item>
                     <Item priority="Must">Comply with procurement body legislation</Item>
@@ -88,7 +88,7 @@
                 <Min>0</Min>
                 <Max>100</Max>
                 <Multiplier>1</Multiplier>
-                <Type>Proportional</Type>
+                <Type>Binary</Type>
                 <Criteria>
                     <Item priority="Must">Include Retrofit-relevant outcomes</Item>
                     <Item priority="Should">Include client references (ideally public sector)</Item>
