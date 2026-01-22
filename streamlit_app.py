@@ -236,34 +236,43 @@ else:
     # MAIN INTERFACE: 3 Columns
     col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
 
-    # --- COLUMN 1: CSF SELECTION (Surgical Fix) ---
+    # --- COLUMN 1: Unique Key Fix ---
     with col1:
         st.subheader("Critical Success Factors")
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
         category_node = root.find(f".//Category[@id='{active_cat_id}']")
         
         if category_node is not None:
+            # Use a set to track rendered IDs in this specific loop run
+            rendered_ids = set()
+            
             for csf in category_node.findall('CSF'):
                 csf_id = csf.get('id')
+                
+                # Avoid duplicate rendering in the same loop
+                if csf_id in rendered_ids:
+                    continue
+                rendered_ids.add(csf_id)
+                
                 csf_name = csf.get('name')
                 
-                # Keep your Tick Logic exactly as it was
+                # Keep your Tick Logic
                 is_validated = st.session_state.archived_status.get(csf_id, False)
                 current_val = st.session_state.get("csf_scores", {}).get(csf_id, 0)
                 display_label = f"{csf_name} ✅" if (is_validated or current_val >= 85) else csf_name
                 
                 is_active = st.session_state.active_csf == csf_id
-                if st.button(display_label, key=f"btn_{csf_id}", type="primary" if is_active else "secondary", use_container_width=True):
-                    st.session_state.active_csf = csf_id
-                    st.session_state.chat_history = []  # Clear previous state
-                    st.session_state.needs_handshake = True  # SET THE TRIGGER
-                    st.rerun()
                 
-                if st.button(display_label, key=f"btn_{csf_id}", type="primary" if is_active else "secondary", use_container_width=True):
-                    # 1. Update identifying state
+                # UNIQUE KEY: Combine Category + CSF ID to ensure uniqueness
+                button_key = f"btn_{active_cat_id}_{csf_id}"
+                
+                if st.button(
+                    display_label, 
+                    key=button_key, 
+                    type="primary" if is_active else "secondary", 
+                    use_container_width=True
+                ):
                     st.session_state.active_csf = csf_id
-                    
-                    # 2. Clear history and set the Handshake Flag
                     st.session_state.chat_history = [] 
                     st.session_state.needs_handshake = True 
                     st.rerun()
