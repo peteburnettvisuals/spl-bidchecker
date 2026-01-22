@@ -44,6 +44,9 @@ if "chat_history" not in st.session_state:
 if "archived_status" not in st.session_state:
     # Tracks which criteria items are met: { "CSF_ID": { "Criteria_Text": True/False } }
     st.session_state.archived_status = {}
+if "all_histories" not in st.session_state:
+    # Structure: { "CSF-ID": [ {role, content}, ... ] }
+    st.session_state.all_histories = {}
 
 
 # --- 4. THE AI AUDITOR ENGINE (STABILIZED) ---
@@ -60,18 +63,19 @@ def get_auditor_response(user_input, csf_data):
     # 2. THE RE-INJECTED MISSION RULES
     # This ensures the AI knows the 'Secret Handshake' for the UI
     base_prompt = (
-        f"You are the SPL Lead Auditor for {c_name}. "
+        f"You are the Bid Readiness Assistant for {c_name}. "
         f"MISSION BRIEF: {c_brief}. EVALUATION MODE: {c_type}. "
         f"CRITERIA: {c_list}. "
-        f"RULES: If MODE is 'Binary', append [VALIDATE: ALL] strictly when all criteria are met. "
+        f"RULES: If MODE is 'Binary', append [VALIDATE: ALL] strictly when the user states that they beleive that all shown criteria are met. Do not use bullet points."
         f"If MODE is 'Proportional', append [SCORE: X] where X is 0-100 based on your audit."
+        f"TONE OF VOICE: Friendly, helpful, professional."
     )
 
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     
     if user_input == "INITIATE_HANDSHAKE":
         # One-shot stable start
-        full_call = f"{base_prompt} USER: Please introduce yourself and give me the Mission Brief."
+        full_call = f"{base_prompt} USER: Please introduce this CSF, explain why it's important, and ask if I believe that my organisation can meet the requirements shown."
         response = model.generate_content(full_call)
     else:
         # --- THE TRANSLATOR: Schema fix for [role, parts, text] ---
@@ -282,8 +286,14 @@ else:
                     use_container_width=True
                 ):
                     st.session_state.active_csf = csf_id
-                    st.session_state.chat_history = [] 
-                    st.session_state.needs_handshake = True 
+                    # Load history for this specific CSF from our dictionary
+                    st.session_state.chat_history = st.session_state.all_histories.get(csf_id, [])
+                    
+                    # If there is no history, trigger the handshake flag
+                    if not st.session_state.chat_history:
+                        st.session_state.needs_handshake = True 
+                    else:
+                        st.session_state.needs_handshake = False
                     st.rerun()
 
     # --- COLUMN 2: THE AUDIT CHAT (Surgical Fix) ---
@@ -334,6 +344,9 @@ else:
             
             st.session_state.chat_history.append({"role": "user", "content": user_input})
             response = get_auditor_response(user_input, csf_context)
+
+            # SAVE-BACK: Ensure the current chat is archived for this specific CSF
+            st.session_state.all_histories[st.session_state.active_csf] = st.session_state.chat_history
             
             # UI Logic: Apply score to the current active CSF
             score_match = re.search(r"\[SCORE: (\d+)\]", response)
@@ -342,6 +355,10 @@ else:
                 # The UI knows which one to update via st.session_state.active_csf
                 if "csf_scores" not in st.session_state: st.session_state.csf_scores = {}
                 st.session_state.csf_scores[st.session_state.active_csf] = val
+
+            if "[VALIDATE: ALL]" in response:
+            # Set the entire CSF to True for the sidebar speedometer logic
+            st.session_state.archived_status[st.session_state.active_csf] = True
                 
             clean_resp = re.sub(r"\[.*?\]", "", response).strip()
             st.session_state.chat_history.append({"role": "model", "content": clean_resp})
