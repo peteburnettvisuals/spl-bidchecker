@@ -338,7 +338,7 @@ else:
             }
 
             # Render with the existing key to maintain stability
-            st_echarts(options=gauge_option, height="180px", key="readiness_gauge_v2")
+            st_echarts(options=gauge_option, height="180px", key="gauge_final_v3")
             st.markdown(f"<p style='text-align: center;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
 
         except Exception as e:
