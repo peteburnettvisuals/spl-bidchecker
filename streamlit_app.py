@@ -196,8 +196,8 @@ if not st.session_state.get("authentication_status"):
     col_l, col_r = st.columns([1, 1], gap="large")
     with col_l:
         st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/bidsys-title.png")
-        st.markdown("### SYSTEM ACCESS: BID READINESS C2")
-        st.info("Public buyers will often exclude bidders at SQ stage if basics are not watertight. ")
+        st.markdown("### Welcome to the SPL Strategies Bid Readiness Checker")
+        st.info("The SPL Strategies Bid Readiness Checker helps to ensure that you are fully prepared to successfully enter into the public procurement process. By conducting a forensic, AI-driven audit of your organisation's core compliance and operational evidence, this tool helps you position your oganisation for success before the first question is even asked. From validating required policies to stress-testing financial thresholds, the Bid Readiness Checker identifies any critical gaps and creates a measurable readiness score that protects your bid from early disqualification and secures your path to the evaluation stage.")
     
     with col_r: # This is the right-hand column from your login screen
         st.header("System Access")
