@@ -341,6 +341,8 @@ else:
 
         # Force a specific height and key to trigger a fresh render
         st_echarts(options=gauge_option, height="180px", key="readiness_gauge_v1")
+
+        st.markdown(f"<p style='text-align: center;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
         
         # Fetch data from session state
         archived = st.session_state.get("archived_status", {})
