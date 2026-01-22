@@ -253,6 +253,11 @@ else:
                 display_label = f"{csf_name} ✅" if (is_validated or current_val >= 85) else csf_name
                 
                 is_active = st.session_state.active_csf == csf_id
+                if st.button(display_label, key=f"btn_{csf_id}", type="primary" if is_active else "secondary", use_container_width=True):
+                    st.session_state.active_csf = csf_id
+                    st.session_state.chat_history = []  # Clear previous state
+                    st.session_state.needs_handshake = True  # SET THE TRIGGER
+                    st.rerun()
                 
                 if st.button(display_label, key=f"btn_{csf_id}", type="primary" if is_active else "secondary", use_container_width=True):
                     # 1. Update identifying state
@@ -268,10 +273,9 @@ else:
         active_csf_node = root.find(f".//CSF[@id='{st.session_state.active_csf}']")
         attribs = active_csf_node.find('CanonicalAttributes')
         
-        # NEW: The Handshake Trigger logic
+        # Check if we need to initiate the first contact
         if st.session_state.get("needs_handshake", False):
-            with st.spinner("Lead Auditor entering session..."):
-                # Prepare context brief for the AI handshake
+            with st.spinner("Lead Auditor initiating handshake..."):
                 handshake_data = {
                     'id': st.session_state.active_csf,
                     'name': active_csf_node.get('name'),
@@ -280,16 +284,16 @@ else:
                     'criteria': [i.text for i in attribs.find('Criteria').findall('Item')]
                 }
                 
-                # Execute the AI call in the main flow
-                initial_msg = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
-                clean_handshake = re.sub(r"\[.*?\]", "", initial_msg).strip()
+                # This call now happens in the correct flow
+                response = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
+                clean_resp = re.sub(r"\[.*?\]", "", response).strip()
                 
-                # Save to history and reset the flag
-                st.session_state.chat_history = [{"role": "assistant", "content": clean_handshake}]
-                st.session_state.needs_handshake = False
+                st.session_state.chat_history = [{"role": "assistant", "content": clean_resp}]
+                st.session_state.needs_handshake = False # RESET THE TRIGGER
                 st.rerun()
-            
-            st.subheader(f"💬 Validating: {csf_context['name']}")
+
+            # Standard chat display logic continues below...
+            st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
             
             # Chat display container
             chat_container = st.container(height=500)
