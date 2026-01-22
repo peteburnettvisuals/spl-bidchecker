@@ -51,36 +51,40 @@ def get_auditor_response(user_input, csf_data):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     
-    # Ensure criteria is a clean string list
-    criteria_list = [f"- {c}" for c in csf_data.get('criteria', [])]
-    criteria_text = "\n".join(criteria_list)
-    
-    # Build a clean, single-string system instruction
-    sys_instr = (
-        f"ROLE: SPL Lead Auditor.\n"
-        f"CSF: {csf_data['name']} (ID: {csf_data['id']}).\n"
-        f"MISSION BRIEF: {csf_data['context_brief']}\n"
-        f"MODE: {csf_data['type']}\n\n"
-        f"CRITERIA STANDARDS:\n{criteria_text}\n\n"
-        f"INSTRUCTIONS:\n"
-        f"- Handshake: Professional introduction + Mission Brief.\n"
-        f"- Evaluation: Binary adds [VALIDATE: ALL], Proportional adds [SCORE: 0-100]."
+    # 1. Ensure all context data are clean strings
+    c_name = str(csf_data.get('name', 'Unknown'))
+    c_id = str(csf_data.get('id', 'Unknown'))
+    c_brief = str(csf_data.get('context_brief', 'No context provided.'))
+    c_type = str(csf_data.get('type', 'Proportional'))
+    c_list = "\n".join([f"- {item}" for item in csf_data.get('criteria', [])])
+
+    # 2. Build the Core Instruction
+    # If system_instruction parameter fails, we'll bake it into the prompt for the handshake
+    core_logic = (
+        f"You are the SPL Lead Auditor auditing {c_name} (ID: {c_id}).\n"
+        f"MISSION: {c_brief}\n"
+        f"EVALUATION MODE: {c_type}\n\n"
+        f"CRITERIA:\n{c_list}\n\n"
+        f"OUTPUT RULES:\n"
+        f"- For Binary: append [VALIDATE: ALL] if passed.\n"
+        f"- For Proportional: append [SCORE: X] where X is 0-100.\n"
     )
 
-    model = genai.GenerativeModel(
-        model_name='gemini-2.0-flash',
-        system_instruction=sys_instr
-    )
+    # Use the most stable model name
+    model = genai.GenerativeModel(model_name='gemini-1.5-flash') 
     
     if user_input == "INITIATE_HANDSHAKE":
-        # The prompt must be a clear string for generate_content
-        prompt = f"Please introduce {csf_data['name']} and explain its context as a procurement requirement."
-        response = model.generate_content(prompt)
+        # Combine instructions and prompt for a one-shot stable start
+        full_handshake_prompt = f"{core_logic}\n\nUSER REQUEST: Please introduce yourself and give me the Mission Brief."
+        response = model.generate_content(full_handshake_prompt)
     else:
         # Standard chat logic
-        # FIX: Explicitly check for an empty list and pass None
+        # REPAIR: Ensure history is None if empty to satisfy SDK
         history = st.session_state.chat_history if len(st.session_state.chat_history) > 0 else None
-        chat = model.start_chat(history=history)
+        
+        # Initialize model with system_instruction ONLY for follow-ups
+        chat_model = genai.GenerativeModel(model_name='gemini-1.5-flash', system_instruction=core_logic)
+        chat = chat_model.start_chat(history=history)
         response = chat.send_message(user_input)
         
     return response.text
