@@ -332,7 +332,7 @@ else:
                         "color": "#ffffff",
                         "fontSize": 32,
                         "fontWeight": "bold",
-                        "fontFamily": "Arial" # Matches your terminal aesthetic
+                        "fontFamily": "Courier New" # Matches your terminal aesthetic
                     },
                     "data": [{"value": readiness_pct}]
                 }
