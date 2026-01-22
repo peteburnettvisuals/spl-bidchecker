@@ -329,8 +329,6 @@ else:
             # This will tell you exactly if a variable name is missing
             st.error(f"HUD Telemetry Error: {e}")
         
-        # Fetch data from session state
-        
         
         
         st.caption(f"USER: {st.session_state.get('name', 'Unknown User')}")
