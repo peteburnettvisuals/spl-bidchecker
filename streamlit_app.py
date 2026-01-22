@@ -236,7 +236,7 @@ else:
     # MAIN INTERFACE: 3 Columns
     col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
 
-    # COLUMN 1: CSF Selection with Automated Handshake
+    # --- COLUMN 1: CSF SELECTION (Surgical Fix) ---
     with col1:
         st.subheader("Critical Success Factors")
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
@@ -247,53 +247,47 @@ else:
                 csf_id = csf.get('id')
                 csf_name = csf.get('name')
                 
-                # Tick Logic
+                # Keep your Tick Logic exactly as it was
                 is_validated = st.session_state.archived_status.get(csf_id, False)
                 current_val = st.session_state.get("csf_scores", {}).get(csf_id, 0)
                 display_label = f"{csf_name} ✅" if (is_validated or current_val >= 85) else csf_name
                 
-                # --- THE TRIGGER ---
                 is_active = st.session_state.active_csf == csf_id
+                
                 if st.button(display_label, key=f"btn_{csf_id}", type="primary" if is_active else "secondary", use_container_width=True):
+                    # 1. Update identifying state
                     st.session_state.active_csf = csf_id
                     
-                    # REPAIR: Instead of setting to [], we generate the initial message
-                    attribs = csf.find('CanonicalAttributes')
-                    context_brief = attribs.find('Context').text
-                    
-                    # Prepare a special "silent" prompt to get the AI to start the handshake
-                    handshake_data = {
-                        'id': csf_id,
-                        'name': csf_name,
-                        'type': attribs.find('Type').text,
-                        'context_brief': context_brief,
-                        'criteria': [i.text for i in attribs.find('Criteria').findall('Item')]
-                    }
-                    
-                    # Start the history with the AI's introductory message
-                    initial_msg = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
-                    clean_handshake = re.sub(r"\[.*?\]", "", initial_msg).strip()
-                    
-                    st.session_state.chat_history = [{"role": "assistant", "content": clean_handshake}]
+                    # 2. Clear history and set the Handshake Flag
+                    st.session_state.chat_history = [] 
+                    st.session_state.needs_handshake = True 
                     st.rerun()
 
-    # COLUMN 2: The Validation Chat
+    # --- COLUMN 2: THE AUDIT CHAT ---
     with col2:
-        # 1. Direct find without namespace prefixes
         active_csf_node = root.find(f".//CSF[@id='{st.session_state.active_csf}']")
+        attribs = active_csf_node.find('CanonicalAttributes')
         
-        if active_csf_node is not None:
-            # 2. Navigate the new XML hierarchy: CSF -> CanonicalAttributes
-            attribs = active_csf_node.find('CanonicalAttributes')
-            
-            # 3. Package context for the AI Handshake
-            csf_context = {
-                'id': st.session_state.active_csf,
-                'name': active_csf_node.get('name'),
-                'type': attribs.find('Type').text,
-                'context_brief': attribs.find('Context').text, # New 'Why' field
-                'criteria': [i.text for i in attribs.find('Criteria').findall('Item')]
-            }
+        # NEW: The Handshake Trigger logic
+        if st.session_state.get("needs_handshake", False):
+            with st.spinner("Lead Auditor entering session..."):
+                # Prepare context brief for the AI handshake
+                handshake_data = {
+                    'id': st.session_state.active_csf,
+                    'name': active_csf_node.get('name'),
+                    'type': attribs.find('Type').text,
+                    'context_brief': attribs.find('Context').text,
+                    'criteria': [i.text for i in attribs.find('Criteria').findall('Item')]
+                }
+                
+                # Execute the AI call in the main flow
+                initial_msg = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
+                clean_handshake = re.sub(r"\[.*?\]", "", initial_msg).strip()
+                
+                # Save to history and reset the flag
+                st.session_state.chat_history = [{"role": "assistant", "content": clean_handshake}]
+                st.session_state.needs_handshake = False
+                st.rerun()
             
             st.subheader(f"💬 Validating: {csf_context['name']}")
             
