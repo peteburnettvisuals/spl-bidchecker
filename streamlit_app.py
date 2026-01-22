@@ -266,9 +266,6 @@ else:
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
         st.header("Bid Readiness Checker")
-
-        st.caption(f"USER: {st.session_state.get('name', 'Unknown User')}")
-        st.caption(f"COMPANY: {st.session_state.get('company', 'Company Name Not Listed')}")
                 
         try:
             # Calculate scores
@@ -332,7 +329,9 @@ else:
         # Fetch data from session state
         archived = st.session_state.get("archived_status", {})
         
-               
+        
+        st.caption(f"USER: {st.session_state.get('name', 'Unknown User')}")
+        st.caption(f"COMPANY: {st.session_state.get('company', 'Company Name Not Listed')}")       
         
         st.subheader("Readiness Categories:")
         for cat in root.findall('Category'):
