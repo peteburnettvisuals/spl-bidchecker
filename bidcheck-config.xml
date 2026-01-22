@@ -6,13 +6,14 @@
             <CanonicalAttributes>
                 <Min>0</Min>
                 <Max>100</Max>
-                <Multiplier>1000</Multiplier> 
+                <Multiplier>1</Multiplier> 
                 <Type>Binary</Type>
                 <Criteria>
                     <Item priority="Must">Must be signed and dated</Item>
                     <Item priority="Must">Must not be an internet copy referencing irrelevant legislation</Item>
                     <Item priority="Must">Must comply with procurement body legislation</Item>
                 </Criteria>
+                <Context>This is a standard requirement for all modern procurement processes, indicating that the supply chain has beenm checked to ensure that there are no human rights abuses hidden within it.</Context>
             </CanonicalAttributes>
         </CSF>
 
@@ -20,7 +21,7 @@
             <CanonicalAttributes>
                 <Min>0</Min>
                 <Max>100</Max>
-                <Multiplier>50</Multiplier>
+                <Multiplier>2</Multiplier>
                 <Type>Proportional</Type>
                 <Criteria>
                     <Item priority="Must">Policies must able to to be produced and supplied within 24 hours</Item>
@@ -28,6 +29,7 @@
                     <Item priority="Must">Must not be an internet copy referencing irrelevant legislation</Item>
                     <Item priority="Must">Must comply with procurement body legislation</Item>
                 </Criteria>
+                <Context>Evidence may often be required at short notice, and will be cross-checked to ensure your documentation is consistent and coherenet across the board.</Context>
             </CanonicalAttributes>
         </CSF>
     </Category>
@@ -45,6 +47,7 @@
                     <Item priority="Must">Must be compiled by certified accountant</Item>
                     <Item priority="Must">Must comply with procurement body legislation</Item>
                 </Criteria>
+                <Context>Accounts will be required for due diligence purposes, to check for stability and growth.</Context>
             </CanonicalAttributes>
         </CSF>
 
@@ -57,10 +60,8 @@
                 <Criteria>
                     <Item priority="Must">Turnover must be 1.5x to 2x the bid contract value </Item>
                 </Criteria>
+                <Context>The procurement team will be looking to appoint a supplier for whom the project is important, but not overwhelming, hence this size of contract vs size of supplier gauging.</Context>
             </CanonicalAttributes>
-            <SpecificAttributes>
-                <Test>Can you provide 10 policies within 24 hours? [cite: 14]</Test>
-            </SpecificAttributes>
         </CSF>
     </Category>
 
@@ -70,7 +71,7 @@
             <CanonicalAttributes>
                 <Min>0</Min>
                 <Max>100</Max>
-                <Multiplier>2.0</Multiplier>
+                <Multiplier>2</Multiplier>
                 <Type>Proportional</Type>
                 <Criteria>
                     <Item priority="Must">Include Measurable commitments, not aspirations</Item>
@@ -78,19 +79,21 @@
                     <Item priority="Should">Include reference to the creation of local jobs and apprenticeships</Item>
                     <Item priority="Should">Include reference fuel poverty support</Item>
                 </Criteria>
+                <Context>Procurement teams will often be required to show that they have selected suppliers who meet desired social contribution levels.</Context>
             </CanonicalAttributes>
         </CSF>
 
         <CSF id="CSF-SOC-02" name="Case Study &amp; KPI Evidence">
             <CanonicalAttributes>
                 <Min>0</Min>
-                <Max>5</Max>
-                <Multiplier>100</Multiplier>
+                <Max>100</Max>
+                <Multiplier>1</Multiplier>
                 <Type>Proportional</Type>
                 <Criteria>
                     <Item priority="Must">Include Retrofit-relevant outcomes</Item>
                     <Item priority="Should">Include client references (ideally public sector)</Item>
                 </Criteria>
+                <Context>Procurement teams will want to see evidence that projects have been undertaken before and delivered succsessfully to the client's satisfaction.</Context>
             </CanonicalAttributes>
         </CSF>
     </Category>

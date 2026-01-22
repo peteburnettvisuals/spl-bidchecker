@@ -45,22 +45,59 @@ if "archived_status" not in st.session_state:
     st.session_state.archived_status = {}
 
 # --- 4. THE AI AUDITOR ENGINE ---
-def get_auditor_response(prompt, criteria_list, csf_id):
+def get_auditor_response(user_input, csf_data):
+    """
+    csf_data contains: 'id', 'name', 'type', 'context_brief', 'criteria'
+    """
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.0-flash')
     
-    # System Instruction: AI acts as a Bid Auditor
+    criteria_str = "\n".join([f"- {c}" for c in csf_data['criteria']])
+    
+    # MISSION BRIEF: Uses the new <Context> field for the handshake
     sys_instr = f"""
-    You are the SPL Bid Auditor. Your goal is to validate if the user meets these criteria: {criteria_list}.
-    If evidence is sufficient for a specific item, append [VALIDATE: item_text].
-    If the entire CSF is satisfied, append [CSF_ARCHIVE: {csf_id}=SUCCESS].
-    Be professional, cynical like a procurement officer, and demand proof. 
+    ROLE: SPL Lead Auditor (Corporate/Procurement Focus).
+    CSF CONTEXT: {csf_data['name']} (ID: {csf_data['id']}).
+    MISSION BRIEF (The "Why"): {csf_data['context_brief']}
+    
+    EVALUATION MODE: {csf_data['type']}
+    CRITERIA STANDARDS:
+    {criteria_str}
+    
+    INSTRUCTIONS:
+    1. THE HANDSHAKE: Start by professionally explaining the MISSION BRIEF—why this CSF is critical for procurement.
+    2. THE AUDIT: Ask if they meet these criteria. 
+    3. THE PAYLOAD: 
+       - If MODE is 'Binary': Append [VALIDATE: ALL] only if they fully comply.
+       - If MODE is 'Proportional': Append [SCORE: X] where X is a value from 0-100 based on evidence.
+    4. Maintain a forensic yet helpful partner tone.
     """
     
-    chat = model.start_chat(history=[])
-    response = chat.send_message(f"{sys_instr}\n\nUser Evidence: {prompt}")
+    chat = model.start_chat(history=st.session_state.chat_history)
+    response = chat.send_message(f"{sys_instr}\n\nUser Evidence: {user_input}")
     return response.text
+
+def calculate_live_score(root, archived_status, csf_scores):
+    total_weighted_points = 0
+    
+    # Iterate through every CSF in the XML (No NS required)
+    for csf in root.findall('.//CSF'):
+        csf_id = csf.get('id')
+        attribs = csf.find('CanonicalAttributes')
+        multiplier = int(attribs.find('Multiplier').text)
+        
+        # Determine the raw score (0-100)
+        # If Binary is validated, it's 100. Otherwise, check Proportional score.
+        if archived_status.get(csf_id) == True:
+            raw_score = 100  
+        else:
+            raw_score = csf_scores.get(csf_id, 0)
+            
+        # Add to the total weighted pot
+        total_weighted_points += raw_score * multiplier
+                
+    return total_weighted_points
 
 def get_user_credentials():
     creds = {"usernames": {}}
@@ -188,48 +225,90 @@ else:
     # MAIN INTERFACE: 3 Columns
     col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
 
-    # COLUMN 1: CSF Selection
+    # COLUMN 1: CSF Selection with Success Ticks
     with col1:
         st.subheader("Critical Success Factors")
         active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
         category_node = root.find(f".//Category[@id='{active_cat_id}']")
         
-        for csf in category_node.findall('CSF'):
-            is_active = st.session_state.active_csf == csf.get('id')
-            if st.button(csf.get('name'), key=csf.get('id'), type="primary" if is_active else "secondary"):
-                st.session_state.active_csf = csf.get('id')
-                st.session_state.chat_history = [] # Reset chat for new context
+        if category_node is not None:
+            for csf in category_node.findall('CSF'):
+                csf_id = csf.get('id')
+                csf_name = csf.get('name')
+                
+                # 1. Check for Validation (Binary) or High Readiness (Proportional)
+                is_validated = st.session_state.archived_status.get(csf_id, False)
+                current_val = st.session_state.get("csf_scores", {}).get(csf_id, 0)
+                
+                # 2. Determine the display label (Append tick if successful)
+                # Threshold set to 85 for Proportional Factors
+                display_label = f"{csf_name} ✅" if (is_validated or current_val >= 85) else csf_name
+                
+                # 3. Render the button
+                is_active = st.session_state.active_csf == csf_id
+                if st.button(
+                    display_label, 
+                    key=f"btn_{csf_id}", # Using f-string for key safety
+                    type="primary" if is_active else "secondary",
+                    use_container_width=True
+                ):
+                    st.session_state.active_csf = csf_id
+                    st.session_state.chat_history = [] # Reset chat for new context
+                    st.rerun()
 
     # COLUMN 2: The Validation Chat
     with col2:
+        # 1. Direct find without namespace prefixes
         active_csf_node = root.find(f".//CSF[@id='{st.session_state.active_csf}']")
-        st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
         
-        chat_container = st.container(height=500)
-        for msg in st.session_state.chat_history:
-            with chat_container.chat_message(msg["role"]):
-                st.write(msg["content"])
+        if active_csf_node is not None:
+            # 2. Navigate the new XML hierarchy: CSF -> CanonicalAttributes
+            attribs = active_csf_node.find('CanonicalAttributes')
+            
+            # 3. Package context for the AI Handshake
+            csf_context = {
+                'id': st.session_state.active_csf,
+                'name': active_csf_node.get('name'),
+                'type': attribs.find('Type').text,
+                'context_brief': attribs.find('Context').text, # New 'Why' field
+                'criteria': [i.text for i in attribs.find('Criteria').findall('Item')]
+            }
+            
+            st.subheader(f"💬 Validating: {csf_context['name']}")
+            
+            # Chat display container
+            chat_container = st.container(height=500)
+            for msg in st.session_state.chat_history:
+                with chat_container.chat_message(msg["role"]):
+                    st.write(msg["content"])
+                    
+            # 4. The Interaction Loop
+            if user_input := st.chat_input("Provide evidence..."):
+                st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
-        if user_input := st.chat_input("Provide evidence..."):
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
-            
-            # Get criteria for the AI
-            criteria_nodes = active_csf_node.findall(".//Item")
-            criteria_texts = [item.text for item in criteria_nodes]
-            
-            response = get_auditor_response(user_input, criteria_texts, st.session_state.active_csf)
-            
-            # Parse for [VALIDATE: ...] tags
-            for item in criteria_texts:
-                if f"[VALIDATE: {item}]" in response:
-                    if st.session_state.active_csf not in st.session_state.archived_status:
-                        st.session_state.archived_status[st.session_state.active_csf] = {}
-                    st.session_state.archived_status[st.session_state.active_csf][item] = True
-                    st.toast(f"✅ Criteria Met: {item[:20]}...")
+                # Call the AI (Make sure your get_auditor_response function is also 'No-NS')
+                response = get_auditor_response(user_input, csf_context)
+                
+                # --- REGEX INGESTION ENGINE ---
+                # A. Binary Pass
+                if "[VALIDATE: ALL]" in response:
+                    st.session_state.archived_status[st.session_state.active_csf] = True
+                    st.toast(f"✅ {csf_context['name']} Validated")
 
-            clean_resp = re.sub(r"\[.*?\]", "", response)
-            st.session_state.chat_history.append({"role": "assistant", "content": clean_resp})
-            st.rerun()
+                # B. Proportional Score (0-100)
+                score_match = re.search(r"\[SCORE: (\d+)\]", response)
+                if score_match:
+                    val = int(score_match.group(1))
+                    if "csf_scores" not in st.session_state:
+                        st.session_state.csf_scores = {}
+                    st.session_state.csf_scores[st.session_state.active_csf] = val
+                    st.toast(f"📊 Readiness Updated: {val}%")
+
+                # 5. Scrub the tags and save for a clean UI
+                clean_resp = re.sub(r"\[.*?\]", "", response).strip()
+                st.session_state.chat_history.append({"role": "assistant", "content": clean_resp})
+                
+                st.rerun()
 
     # COLUMN 3: MoSCoW Status Boxes
     with col3:
