@@ -5,7 +5,7 @@
 /* 1. GLOBAL UI & MAKE.COM BACKGROUND */
 .stApp {
     /* Replaces your dark image with a clean, light gradient 'swoosh' */
-    background: radial-gradient(circle at top right, #d946ef, #a855f7); 
+    background: radial-gradient(circle at top right, #1a4d87, #9c2dba); 
     background-size: cover;
     color: #1e293b !important; /* Professional Slate Grey instead of pure white */
     font-family: 'Open Sans', sans-serif;
