@@ -309,7 +309,7 @@ else:
                     "center": ["50%", "85%"], # Pivot point pushed up to avoid clipping
                     "pointer": {"show": False},
                     "itemStyle": {
-                        "color": "#00ffcc", 
+                        "color": "#a855f7", 
                         "shadowBlur": 15, 
                         "shadowColor": "rgba(0, 255, 204, 0.6)"
                     },
@@ -326,7 +326,7 @@ else:
                     "detail": {
                         "offsetCenter": [0, "-15%"], 
                         "formatter": "{value}%",
-                        "color": "#ffffff",
+                        "color": "#1e293b",
                         "fontSize": "1.5rem",
                         "fontWeight": "bold",
                         "fontFamily": "Open Sans, sans-serif"

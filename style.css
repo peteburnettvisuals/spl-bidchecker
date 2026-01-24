@@ -1,172 +1,107 @@
 /* ==========================================
-   SPL BID READINESS C2: REFINED HUD
+   SPL BID READINESS C2: MODERN SaaS EDITION
    ========================================== */
 
-/* 1. GLOBAL UI & BACKGROUND */
+/* 1. GLOBAL UI & MAKE.COM BACKGROUND */
 .stApp {
-    background-image: url("https://peteburnettvisuals.com/wp-content/uploads/2026/01/brs-background.jpg");
+    /* Replaces your dark image with a clean, light gradient 'swoosh' */
+    background: radial-gradient(circle at top right, #fdfbff, #f4f7fb); 
     background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    color: #FFFFFF !important;
+    color: #1e293b !important; /* Professional Slate Grey instead of pure white */
     font-family: 'Open Sans', sans-serif;
 }
 
-    html {
-    zoom: 0.9; /* Slightly scales the entire UI down for small resolutions */
+html {
+    zoom: 0.95; /* Increased slightly from 0.9 as light themes feel more spacious */
 }
 
-/* 2. SIDEBAR & METRICS */
+/* 2. CLEAN LIGHT SIDEBAR */
 [data-testid="stSidebar"] {
-    background-color: rgba(2, 5, 10, 0.95) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+    background-color: #f8fafc !important; /* Light Grey Sidebar */
+    border-right: 1px solid #e2e8f0 !important;
 }
 
-h1, h2, h3, .stMetric, p, span, label {
-    color: #F0F8FF !important; 
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+/* Make sidebar text dark for readability */
+[data-testid="stSidebar"] h1, 
+[data-testid="stSidebar"] h2, 
+[data-testid="stSidebar"] h3, 
+[data-testid="stSidebar"] p, 
+[data-testid="stSidebar"] span, 
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] .stCaption {
+    color: #475569 !important;
+    text-shadow: none !important;
 }
 
-[data-testid="stMetricValue"] {
-    color: #FF8C00 !important; 
-    text-shadow: 0 0 12px #FF8C00;
-}
-
-/* 3. TRANSPARENCY & CHAT BUBBLES */
-[data-testid="stAppViewContainer"], .main, .block-container, 
-[data-testid="stVerticalBlock"], [data-testid="stChatMessageContainer"] {
-    background-color: transparent !important;
-}
-
-[data-testid="stChatMessage"] {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 8px;
-    backdrop-filter: blur(4px);
-}
-
-/* 4. COMMAND INPUT (AMBER) */
-[data-testid="stChatInputContainer"] {
-    background-color: #000000 !important; 
-    border: 1px solid #FF8C00 !important; 
-    border-radius: 4px !important;
-    box-shadow: 0 0 10px rgba(255, 140, 0, 0.3);
-}
-
-/* 5. UNIFIED BUTTONS (UI, FORM, & AUTH) */
-/* Targets all buttons to ensure high-visibility black text */
+/* 3. GRADIENTED BUTTONS (The 'Make' Signature) */
 div.stButton > button, 
 div[data-testid="stForm"] button,
-.st-emotion-cache-19rxjzo,
-div[data-testid="stSidebar"] button {
-    background-color: #FFFFFF !important; 
-    color: #000000 !important; 
-    border: 1px solid #70e2ff !important;
-    border-radius: 2px !important;
-    font-weight: 800 !important;
-    text-transform: uppercase;
-    transition: 0.3s ease;
-    box-shadow: 0 0 10px rgba(112, 226, 255, 0.3);
+div[data-testid="stSidebar"] button,
+button[kind="secondary"], 
+button[kind="primary"] {
+    /* Signature Pink-to-Purple Gradient */
+    background: linear-gradient(90deg, #d946ef 0%, #a855f7 100%) !important; 
+    color: #FFFFFF !important; 
+    border: none !important;
+    border-radius: 8px !important; /* Softer, modern corners */
+    font-weight: 600 !important;
+    text-transform: none !important; /* Remove harsh uppercase */
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.2);
+    font-size: 0.9rem !important;
+    white-space: normal !important;
+    height: auto !important;
 }
 
-/* Corporate Cyan Hover for Interactive Feedback */
-div.stButton > button:hover, 
-div[data-testid="stForm"] button:hover,
-.st-emotion-cache-19rxjzo:hover {
-    background-color: #70e2ff !important;
-    color: #000000 !important;
-    box-shadow: 0 0 20px #70e2ff;
+div.stButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.4);
+    filter: brightness(1.1);
 }
 
-/* Force paragraph text inside buttons to remain black */
-div.stButton button p, .st-emotion-cache-19rxjzo p {
-    color: #000000 !important;
-    margin-bottom: 0px !important;
-    font-weight: 800 !important;
-}
-
-/* 6. TAB HEADERS (Corporate Branding) */
-button[data-baseweb="tab"] {
-    border-bottom-width: 2px !important;
-}
-
-button[data-baseweb="tab"] p {
+/* Ensure button text stays white */
+div.stButton button p {
     color: #FFFFFF !important;
-    font-weight: bold !important;
+}
+
+/* 4. CLEAN CHAT BUBBLES & CARDS */
+[data-testid="stChatMessage"] {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    color: #1e293b !important;
+}
+
+/* Reset text colors for main area to dark grey */
+h1, h2, h3, p, span, label {
+    color: #1e293b !important;
+    text-shadow: none !important;
+}
+
+/* 5. TAB HEADERS (Modern Minimalism) */
+button[data-baseweb="tab"] p {
+    color: #64748b !important;
 }
 
 button[aria-selected="true"] {
-    border-bottom-color: #70e2ff !important;
-    background-color: rgba(112, 226, 255, 0.1) !important;
+    border-bottom-color: #a855f7 !important;
 }
 
 button[aria-selected="true"] p {
-    color: #70e2ff !important;
-    text-shadow: 0 0 5px #70e2ff;
+    color: #a855f7 !important;
+    text-shadow: none !important;
 }
 
-/* 7. FORM INPUTS */
-input {
-    color: #000000 !important;
-    background-color: #ffffff !important;
-}
-
-/* 8. AUTHENTICATOR LEGIBILITY PATCH */
-/* Forces text in the Auth widget buttons to be black, overriding global phosphor rules */
-[data-testid="stForm"] button p, 
-.st-emotion-cache-19rxjzo p, 
-.st-emotion-cache-12m0u9n p {
-    color: #000000 !important;
-    font-weight: 800 !important;
-}
-
-/* 9. TOAST MESSAGE RECOVERY */
-/* Ensures that success/error notifications are readable against the HUD backdrop */
-[data-testid="stToast"] {
-    background-color: #050505 !important;
-    border: 1px solid #70e2ff !important;
-}
-
-[data-testid="stToast"] p {
-    color: #70e2ff !important; /* Corporate Cyan text for high visibility */
-    font-weight: bold !important;
-}
-
-/* Ensure all markdown lists in chat are white */
-ul, ol {
-    color: #ffffff !important;
-}
-
-li {
-    color: #ffffff !important;
-    margin-bottom: 5px;
-}
-
-/* Optional: Ensure the numbers and bullets themselves are white */
-li::marker {
-    color: #00ffcc; /* Or use your specific cyan/white theme color */
-}
-
+/* 6. GAUGE SHADOW */
 iframe[title="streamlit_echarts.st_echarts"] {
     border: none !important;
-    filter: drop-shadow(0 0 5px rgba(0, 255, 204, 0.2));
+    filter: drop-shadow(0 4px 10px rgba(168, 85, 247, 0.15));
 }
 
-/* Ensure sidebar content scales down gracefully */
-section[data-testid="stSidebar"] > div {
-    padding-top: 1rem !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-}
-
-/* Force specific widget widths to prevent horizontal scrolling */
-div[data-testid="stVerticalBlock"] > div {
-    width: 100% !important;
-}
-
-/* Adjust button font size for the Category Taps */
-button[kind="secondary"], button[kind="primary"] {
-    font-size: 0.8rem !important;
-    white-space: normal !important; /* Wrap long CSF names */
-    height: auto !important;
+/* 7. CHECKLIST BOXES (Refined) */
+/* Keep your logic for bg_color, but soften the look */
+div[style*="background-color"] {
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
