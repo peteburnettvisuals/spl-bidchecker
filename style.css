@@ -1,27 +1,27 @@
 /* ==========================================
-   SPL BID READINESS C2: MODERN SaaS HUD
+   SPL BID READINESS C2: MODERN SaaS EDITION
    ========================================== */
 
-/* 1. GLOBAL UI & GRADIENT SWOOSH BACKGROUND */
+/* 1. GLOBAL UI & MAKE.COM BACKGROUND */
 .stApp {
-    /* Mimics the soft white-to-blue-grey swoosh from Make.com */
-    background: radial-gradient(circle at top right, #fdfbff, #ebf1f9 40%, #f4f7fb 100%) !important;
-    background-attachment: fixed;
-    color: #1e293b !important; /* Modern Slate Grey text */
+    /* Replaces your dark image with a clean, light gradient 'swoosh' */
+    background: radial-gradient(circle at top right, #fdfbff, #f4f7fb); 
+    background-size: cover;
+    color: #1e293b !important; /* Professional Slate Grey instead of pure white */
     font-family: 'Open Sans', sans-serif;
 }
 
 html {
-    zoom: 0.95; /* Slightly increased for better readability on light themes */
+    zoom: 0.95; /* Increased slightly from 0.9 as light themes feel more spacious */
 }
 
-/* 2. LIGHT GREY SIDEBAR */
+/* 2. CLEAN LIGHT SIDEBAR */
 [data-testid="stSidebar"] {
-    background-color: #f8fafc !important; /* Soft light grey */
+    background-color: #f8fafc !important; /* Light Grey Sidebar */
     border-right: 1px solid #e2e8f0 !important;
 }
 
-/* Reset Sidebar text to dark for legibility */
+/* Make sidebar text dark for readability */
 [data-testid="stSidebar"] h1, 
 [data-testid="stSidebar"] h2, 
 [data-testid="stSidebar"] h3, 
@@ -33,22 +33,22 @@ html {
     text-shadow: none !important;
 }
 
-/* 3. GRADIENTED BUTTONS (The Make.com Signature) */
+/* 3. GRADIENTED BUTTONS (The 'Make' Signature) */
 div.stButton > button, 
 div[data-testid="stForm"] button,
 div[data-testid="stSidebar"] button,
 button[kind="secondary"], 
 button[kind="primary"] {
-    /* Make.com Vibrant Pink-to-Purple Gradient */
+    /* Signature Pink-to-Purple Gradient */
     background: linear-gradient(90deg, #d946ef 0%, #a855f7 100%) !important; 
     color: #FFFFFF !important; 
     border: none !important;
-    border-radius: 8px !important; 
+    border-radius: 8px !important; /* Softer, modern corners */
     font-weight: 600 !important;
-    text-transform: none !important; 
+    text-transform: none !important; /* Remove harsh uppercase */
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.2);
-    font-size: 0.85rem !important;
+    font-size: 0.9rem !important;
     white-space: normal !important;
     height: auto !important;
 }
@@ -59,7 +59,12 @@ div.stButton > button:hover {
     filter: brightness(1.1);
 }
 
-/* 4. CLEAN CHAT BUBBLES */
+/* Ensure button text stays white */
+div.stButton button p {
+    color: #FFFFFF !important;
+}
+
+/* 4. CLEAN CHAT BUBBLES & CARDS */
 [data-testid="stChatMessage"] {
     background-color: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
@@ -68,13 +73,13 @@ div.stButton > button:hover {
     color: #1e293b !important;
 }
 
-/* 5. OVERRIDE DARK THEME ELEMENTS */
+/* Reset text colors for main area to dark grey */
 h1, h2, h3, p, span, label {
     color: #1e293b !important;
     text-shadow: none !important;
 }
 
-/* 6. TAB HEADERS (Corporate Minimalism) */
+/* 5. TAB HEADERS (Modern Minimalism) */
 button[data-baseweb="tab"] p {
     color: #64748b !important;
 }
@@ -85,15 +90,18 @@ button[aria-selected="true"] {
 
 button[aria-selected="true"] p {
     color: #a855f7 !important;
+    text-shadow: none !important;
 }
 
-/* 7. RESPONSIVE SIDEBAR FIXES */
-section[data-testid="stSidebar"] > div {
-    padding-top: 1rem !important;
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
+/* 6. GAUGE SHADOW */
+iframe[title="streamlit_echarts.st_echarts"] {
+    border: none !important;
+    filter: drop-shadow(0 4px 10px rgba(168, 85, 247, 0.15));
 }
 
-div[data-testid="stVerticalBlock"] > div {
-    width: 100% !important;
+/* 7. CHECKLIST BOXES (Refined) */
+/* Keep your logic for bg_color, but soften the look */
+div[style*="background-color"] {
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
