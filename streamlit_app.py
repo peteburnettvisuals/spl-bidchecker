@@ -311,7 +311,7 @@ else:
                     "itemStyle": {
                         "color": "#a855f7", 
                         "shadowBlur": 15, 
-                        "shadowColor": "rgba(0, 255, 204, 0.6)"
+                        "shadowColor": "rgba(168, 85, 247, 0.6)"
                     },
                     "progress": {"show": True, "roundCap": True, "width": 15},
                     "axisLine": {

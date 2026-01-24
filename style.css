@@ -75,13 +75,13 @@ div.stButton button p {
 
 /* Reset text colors for main area to dark grey */
 h1, h2, h3, p, span, label {
-    color: #1e293b !important;
+    color: #ffffff !important;
     text-shadow: none !important;
 }
 
 /* 5. TAB HEADERS (Modern Minimalism) */
 button[data-baseweb="tab"] p {
-    color: #64748b !important;
+    color: #ffffff !important;
 }
 
 button[aria-selected="true"] {
