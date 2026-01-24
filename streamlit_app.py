@@ -281,10 +281,11 @@ else:
     # Render the Assess UI    
 
     # SIDEBAR: The Speedometer & Nav
-    st.image(
+    with st.sidebar:
+        st.image(
         "https://peteburnettvisuals.com/wp-content/uploads/2026/01/bidready-inlinelogo.png", 
         use_container_width=True
-    )
+        )
                         
         try:
             # 1. Calculation Safety
