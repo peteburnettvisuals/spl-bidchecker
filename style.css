@@ -131,3 +131,21 @@ button[data-baseweb="tab"] p {
     color: #ffffff !important;
     font-weight: 500 !important;
 }
+
+/* --- REMOVE WHITE TOP BAR --- */
+header[data-testid="stHeader"] {
+    background-color: transparent !important; /* Removes the white background */
+    background: transparent !important;
+    border-bottom: none !important; /* Removes the thin grey line */
+}
+
+/* Ensure the top-most app container doesn't have a background override */
+.stApp {
+    background: radial-gradient(circle at top right, #fdfbff, #ebf1f9 40%, #f4f7fb 100%) !important;
+    background-attachment: fixed;
+}
+
+/* Optional: Shift the main content up slightly now that the header is 'gone' */
+.main .block-container {
+    padding-top: 2rem !important; 
+}
