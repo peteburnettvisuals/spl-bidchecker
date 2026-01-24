@@ -111,3 +111,23 @@ div[style*="background-color"] {
     border-radius: 8px !important;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
+
+/* --- LOGIN FORM LABELS --- */
+/* Targets the text labels above the input boxes in the Login/Register forms */
+[data-testid="stForm"] label p {
+    color: #1e293b !important; /* Slate Grey for high legibility */
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.01rem;
+}
+
+/* Optional: Targets the 'Username' and 'Password' text specifically if the above is too broad */
+.st-emotion-cache-16idsys p {
+    color: #1e293b !important;
+}
+
+/* Ensures the Tab headers (Register/Login) match the new clean look */
+button[data-baseweb="tab"] p {
+    color: #475569 !important;
+    font-weight: 500 !important;
+}
