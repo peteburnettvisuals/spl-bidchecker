@@ -74,8 +74,14 @@ div.stButton button p {
 }
 
 /* Reset text colors for main area to dark grey */
-h1, h2, h3, p, span, label {
+h1, h2, h3, span, label {
     color: #ffffff !important;
+    text-shadow: none !important;
+}
+
+/* Reset text colors for main area to dark grey */
+p {
+    color: #1e293b !important;
     text-shadow: none !important;
 }
 
